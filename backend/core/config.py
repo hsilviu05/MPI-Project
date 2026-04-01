@@ -1,5 +1,10 @@
 from pydantic import BaseSettings, Field
 from typing import Optional
+from pathlib import Path
+
+
+# Load `.env` from the backend package directory so `.env` can remain in `backend/`.
+env_path = Path(__file__).resolve().parents[1] / ".env"
 
 
 class Settings(BaseSettings):
@@ -11,7 +16,7 @@ class Settings(BaseSettings):
     port: int = Field(8000, env="PORT")
 
     class Config:
-        env_file = ".env"
+        env_file = str(env_path)
         env_file_encoding = "utf-8"
 
 
