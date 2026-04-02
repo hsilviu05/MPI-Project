@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from .core.config import settings
 from .db import init_db, close_db
 from .api.routes.auth import router as auth_router
-
+from .api.routes.portfolio import router as portfolio_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -10,6 +10,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(portfolio_router, prefix="/portfolios", tags=["portfolios"])
 
 @app.on_event("startup")
 def on_startup():
