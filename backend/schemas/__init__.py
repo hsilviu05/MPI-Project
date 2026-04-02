@@ -1,4 +1,5 @@
 from .user import UserCreate, UserUpdate, UserRead
+from .token import Token, TokenPayload
 from .portfolio import PortfolioCreate, PortfolioUpdate, PortfolioRead, PortfolioDetailRead
 from .asset import AssetCreate, AssetUpdate, AssetRead
 from .holding import HoldingCreate, HoldingUpdate, HoldingRead, HoldingDetailRead
@@ -36,4 +37,7 @@ __all__ = [
     "PriceSnapshotCreate",
     "PriceSnapshotUpdate",
     "PriceSnapshotRead",
+    # Token
+    "Token",
+    "TokenPayload",
 ]
