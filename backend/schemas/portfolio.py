@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 class PortfolioCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    owner_id: int
 
 
 class PortfolioUpdate(BaseModel):
