@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
+from decimal import Decimal
 
 
 class PortfolioCreate(BaseModel):
@@ -28,3 +29,22 @@ class PortfolioRead(BaseModel):
 
 class PortfolioDetailRead(PortfolioRead):
     holdings: List["HoldingRead"] = []
+
+
+class ValuationAsset(BaseModel):
+    asset_id: int
+    symbol: Optional[str]
+    name: Optional[str]
+    quantity: Decimal
+    price: Optional[Decimal]
+    value: Optional[Decimal]
+    missing_price: bool = False
+
+
+class PortfolioValuationRead(BaseModel):
+    portfolio_id: int
+    total_value: Decimal
+    assets: List[ValuationAsset]
+
+    class Config:
+        orm_mode = False
