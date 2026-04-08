@@ -5,6 +5,7 @@ from .api.routes.auth import router as auth_router
 from .api.routes.portfolio import router as portfolio_router
 from .api.routes.assets import router as assets_router
 from .api.routes.holdings import router as holdings_router
+from .api.routes.transactions import router as transactions_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -15,6 +16,7 @@ app.include_router(auth_router)
 app.include_router(portfolio_router, prefix="/portfolios", tags=["portfolios"])
 app.include_router(assets_router, prefix="/assets", tags=["assets"])
 app.include_router(holdings_router, prefix="/portfolios/{portfolio_id}/holdings", tags=["holdings"])
+app.include_router(transactions_router, prefix="/portfolios/{portfolio_id}/holdings/{holding_id}/transactions", tags=["transactions"])
 
 @app.on_event("startup")
 def on_startup():
