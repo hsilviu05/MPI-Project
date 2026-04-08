@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     database_url: Optional[str] = Field(None, env="DATABASE_URL")
     host: str = Field("0.0.0.0", env="HOST")
     port: int = Field(8000, env="PORT")
+    # External price provider configuration
+    price_provider: Optional[str] = Field(None, env="PRICE_PROVIDER")
+    price_provider_api_key: Optional[str] = Field(None, env="PRICE_PROVIDER_API_KEY")
 
     class Config:
         env_file = str(env_path)

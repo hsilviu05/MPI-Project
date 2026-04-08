@@ -6,6 +6,7 @@ from ...api import deps
 from ...db import get_db
 from ...models.asset import Asset
 from ...schemas.asset import AssetCreate, AssetRead
+from ...services.price_provider import get_latest_price, PriceProviderError, InvalidSymbolError
 
 router = APIRouter()
 
@@ -53,3 +54,18 @@ def list_assets(
         
     assets = query.offset(skip).limit(limit).all()
     return assets
+
+
+@router.get("/price/{symbol}")
+def get_price(
+    symbol: str,
+    current_user = Depends(deps.get_current_user),
+):
+    """Fetch latest market price for a symbol from configured provider."""
+    try:
+        price = get_latest_price(symbol)
+        return {"symbol": symbol.upper(), "price": str(price)}
+    except InvalidSymbolError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid or unknown symbol")
+    except PriceProviderError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Price provider unavailable")
