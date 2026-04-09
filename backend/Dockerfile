@@ -5,12 +5,18 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Create non-root user for security
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --gid 1001 --no-create-home appuser
+
 COPY requirements.txt ./backend/
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r backend/requirements.txt
 
-COPY . ./backend
+COPY --chown=appuser:appgroup . ./backend
+
+USER appuser
 
 EXPOSE 8000
 
