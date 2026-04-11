@@ -18,6 +18,7 @@ env/
 # IDE
 .idea/
 .vscode/
+.git/
 *.swp
 *.swo
 
@@ -31,11 +32,3 @@ htmlcov/
 *.egg-info/
 dist/
 build/
-
-# Logs
-*.log
-
-# Docker
-Dockerfile
-docker-compose*.yaml
-.dockerignore
