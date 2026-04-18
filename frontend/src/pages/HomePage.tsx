@@ -29,10 +29,10 @@ export function HomePage() {
 
   return (
     <section className="card">
-      <h2>Base Page</h2>
+      <h3>Overview</h3>
       <p>
-        Aplicatia frontend ruleaza. Acesta este punctul de plecare pentru
-        ecranele de autentificare si portofoliu.
+        Acesta este dashboard-ul principal. De aici poti merge catre portofolii,
+        active si setari.
       </p>
 
       <div className="status">
