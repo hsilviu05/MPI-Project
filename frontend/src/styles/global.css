@@ -13,24 +13,69 @@ body {
   margin: 0;
 }
 
-.app-shell {
+.dashboard-shell {
   min-height: 100vh;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 40px 20px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
 }
 
-.app-header h1 {
-  margin: 0 0 8px;
+.dashboard-sidebar {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 24px 16px;
 }
 
-.app-header p {
+.brand h1 {
+  font-size: 1.2rem;
   margin: 0;
-  color: #334155;
 }
 
-.app-main {
-  margin-top: 24px;
+.brand p {
+  margin: 4px 0 24px;
+  color: #94a3b8;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.nav-link {
+  display: block;
+  text-decoration: none;
+  color: #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: background-color 0.2s ease;
+}
+
+.nav-link:hover {
+  background: #1e293b;
+}
+
+.nav-link.active {
+  background: #334155;
+  color: #ffffff;
+}
+
+.dashboard-content {
+  padding: 24px;
+}
+
+.dashboard-header {
+  margin-bottom: 16px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+}
+
+.dashboard-header p {
+  margin: 6px 0 0;
+  color: #334155;
 }
 
 .card {
@@ -45,8 +90,26 @@ body {
   margin-top: 0;
 }
 
+.card h3 {
+  margin-top: 0;
+}
+
 .status {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    padding-bottom: 12px;
+  }
+
+  .nav-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
