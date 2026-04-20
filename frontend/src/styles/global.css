@@ -361,3 +361,8 @@ a.btn-link {
 .back-row {
   margin-top: 0;
 }
+
+.valuation-total {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
