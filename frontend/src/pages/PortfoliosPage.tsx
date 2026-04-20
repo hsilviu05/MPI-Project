@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { EmptyState, ErrorBanner, LoadingNotice } from "../components/feedback/PageStates";
 import { getAccessToken } from "../lib/authToken";
 import {
   createPortfolio,
@@ -149,14 +150,13 @@ export function PortfoliosPage() {
         </p>
 
         {needsAuth && (
-          <p className="field-error">
-            Nu esti autentificat.{" "}
-            <Link to="/login">Mergi la login</Link> pentru a gestiona portofoliile.
+          <p className="muted">
+            <Link to="/login">Autentifica-te</Link> pentru a salva portofolii in backend.
           </p>
         )}
 
-        {listError && <p className="field-error">{listError}</p>}
-        {actionError && <p className="field-error">{actionError}</p>}
+        {listError && <ErrorBanner title="Lista portofolii" message={listError} />}
+        {actionError && <ErrorBanner title="Actiune esuata" message={actionError} />}
 
         <form className="portfolio-form" onSubmit={onCreate}>
           <h4 className="subsection-title">Creeaza portofoliu</h4>
@@ -228,9 +228,21 @@ export function PortfoliosPage() {
       <section className="card">
         <h4 className="subsection-title">Lista portofolii</h4>
         {loading ? (
-          <p className="muted">Se incarca...</p>
+          <LoadingNotice label="Incarcare portofolii din API..." />
+        ) : needsAuth ? (
+          <EmptyState
+            title="Lista indisponibila"
+            description="După autentificare, portofoliile tale vor aparea aici."
+          >
+            <Link className="btn-link" to="/login">
+              Mergi la login
+            </Link>
+          </EmptyState>
         ) : items.length === 0 ? (
-          <p className="muted">Nu ai inca portofolii. Creeaza unul mai sus.</p>
+          <EmptyState
+            title="Niciun portofoliu inca"
+            description="Foloseste formularul de mai sus pentru a crea primul portofoliu. Datele sunt salvate in backend."
+          />
         ) : (
           <div className="table-wrap">
             <table className="data-table">

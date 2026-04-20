@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ErrorBanner } from "../components/feedback/PageStates";
 import { setAccessToken } from "../lib/authToken";
 import { submitLogin } from "../services/auth";
 
@@ -68,7 +69,12 @@ export function LoginPage() {
   };
 
   return (
-    <form className="auth-form" onSubmit={onSubmit} noValidate>
+    <form
+      className="auth-form"
+      onSubmit={onSubmit}
+      noValidate
+      aria-busy={isSubmitting}
+    >
       <h2>Login</h2>
 
       {registered && (
@@ -100,7 +106,7 @@ export function LoginPage() {
       </button>
 
       {statusMessage && <p className="field-success">{statusMessage}</p>}
-      {apiError && <p className="field-error">{apiError}</p>}
+      {apiError && <ErrorBanner title="Autentificare esuata" message={apiError} />}
       {hasErrors && <p className="field-error">Corecteaza campurile marcate mai sus.</p>}
 
       <p className="auth-switch">

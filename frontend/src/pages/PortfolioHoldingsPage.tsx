@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
+import { EmptyState, ErrorBanner, LoadingNotice } from "../components/feedback/PageStates";
 import { getAccessToken } from "../lib/authToken";
 import { listAssets } from "../services/assets";
 import {
@@ -217,8 +218,10 @@ export function PortfolioHoldingsPage() {
   if (!idValid) {
     return (
       <section className="card">
-        <p className="field-error">ID portofoliu invalid.</p>
-        <Link to="/portfolios">Inapoi la portofolii</Link>
+        <ErrorBanner title="Ruta invalida" message="ID-ul portofoliului din URL nu este valid." />
+        <Link className="btn-link" to="/portfolios">
+          Inapoi la portofolii
+        </Link>
       </section>
     );
   }
@@ -238,14 +241,15 @@ export function PortfolioHoldingsPage() {
         </p>
 
         {needsAuth && (
-          <p className="field-error">
-            <Link to="/login">Autentifica-te</Link> pentru a gestiona detinerile.
-          </p>
+          <ErrorBanner
+            title="Autentificare necesara"
+            message="Detinerile se incarca si salveaza doar dupa login."
+          />
         )}
 
-        {listError && <p className="field-error">{listError}</p>}
-        {assetsError && <p className="field-error">{assetsError}</p>}
-        {actionError && <p className="field-error">{actionError}</p>}
+        {listError && <ErrorBanner title="Detineri" message={listError} />}
+        {assetsError && <ErrorBanner title="Catalog active" message={assetsError} />}
+        {actionError && <ErrorBanner title="Actiune esuata" message={actionError} />}
 
         <form className="portfolio-form" onSubmit={onCreate}>
           <h4 className="subsection-title">Adauga detinere</h4>
@@ -356,16 +360,19 @@ export function PortfolioHoldingsPage() {
             Raspuns din API: <code>GET /portfolios/:portfolioId/valuation</code> — ultimul pret cunoscut per
             activ. Daca lipseste snapshot de pret in backend, coloana de status indica acest lucru.
           </p>
-          {valuationError && <p className="field-error">{valuationError}</p>}
+          {valuationError && <ErrorBanner title="Evaluare portofoliu" message={valuationError} />}
           {loading && !valuation && !valuationError ? (
-            <p className="muted">Se incarca evaluarea...</p>
+            <LoadingNotice label="Incarcare evaluare din API..." />
           ) : valuation ? (
             <>
               <p className="valuation-total">
                 <strong>Valoare totala estimata:</strong> {formatDec(valuation.total_value)}
               </p>
               {valuation.assets.length === 0 ? (
-                <p className="muted">Nu exista detineri de evaluat.</p>
+                <EmptyState
+                  title="Nimic de evaluat"
+                  description="Adauga cel putin o detinere pentru a vedea linii in evaluare."
+                />
               ) : (
                 <div className="table-wrap">
                   <table className="data-table">
@@ -404,9 +411,25 @@ export function PortfolioHoldingsPage() {
       <section className="card">
         <h4 className="subsection-title">Lista detineri</h4>
         {loading ? (
-          <p className="muted">Se incarca...</p>
+          <LoadingNotice label="Incarcare detineri din API..." />
+        ) : needsAuth ? (
+          <EmptyState
+            title="Lista indisponibila"
+            description="Autentifica-te pentru a vedea detinerile acestui portofoliu."
+          >
+            <Link className="btn-link" to="/login">
+              Login
+            </Link>
+          </EmptyState>
         ) : holdings.length === 0 ? (
-          <p className="muted">Nu ai detineri in acest portofoliu.</p>
+          <EmptyState
+            title="Nicio detinere"
+            description="Selecteaza un activ din catalog (pagina Assets), apoi adauga cantitatea mai sus."
+          >
+            <Link className="btn-link" to="/assets">
+              Deschide Assets
+            </Link>
+          </EmptyState>
         ) : (
           <div className="table-wrap">
             <table className="data-table">
