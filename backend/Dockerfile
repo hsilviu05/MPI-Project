@@ -20,4 +20,5 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Migrații la pornire (fără fișier .sh — evită CRLF pe Windows care rupe shebang-ul în Linux)
+ENTRYPOINT ["sh", "-c", "set -e && cd /app && python -m alembic -c backend/alembic.ini upgrade head && exec python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000"]

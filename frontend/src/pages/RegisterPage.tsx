@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { submitRegister } from "../services/auth";
 
 type RegisterFields = {
@@ -41,6 +41,7 @@ function validateRegister(fields: RegisterFields): RegisterErrors {
 }
 
 export function RegisterPage() {
+  const navigate = useNavigate();
   const [fields, setFields] = useState<RegisterFields>({
     fullName: "",
     email: "",
@@ -48,7 +49,7 @@ export function RegisterPage() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<RegisterErrors>({});
-  const [statusMessage, setStatusMessage] = useState("");
+  const [apiError, setApiError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
@@ -57,7 +58,7 @@ export function RegisterPage() {
     event.preventDefault();
     const nextErrors = validateRegister(fields);
     setErrors(nextErrors);
-    setStatusMessage("");
+    setApiError("");
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -70,7 +71,9 @@ export function RegisterPage() {
         email: fields.email,
         password: fields.password,
       });
-      setStatusMessage("Formular trimis. Conectarea la backend va fi activata in pasul urmator.");
+      navigate("/login", { replace: true, state: { registered: true } });
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Inregistrarea a esuat.");
     } finally {
       setIsSubmitting(false);
     }
@@ -126,7 +129,7 @@ export function RegisterPage() {
         {isSubmitting ? "Se trimite..." : "Creeaza cont"}
       </button>
 
-      {statusMessage && <p className="field-success">{statusMessage}</p>}
+      {apiError && <p className="field-error">{apiError}</p>}
       {hasErrors && <p className="field-error">Corecteaza campurile marcate mai sus.</p>}
 
       <p className="auth-switch">
