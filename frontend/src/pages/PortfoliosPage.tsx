@@ -249,6 +249,9 @@ export function PortfoliosPage() {
                     <td className="cell-muted">{p.description || "—"}</td>
                     <td className="cell-muted">{formatDate(p.updated_at)}</td>
                     <td className="cell-actions">
+                      <Link className="btn-link" to={`/portfolios/${p.id}/holdings`}>
+                        Detineri
+                      </Link>
                       <button
                         type="button"
                         className="btn-link"
