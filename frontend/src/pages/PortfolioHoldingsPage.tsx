@@ -9,8 +9,10 @@ import {
   listHoldings,
   updateHolding,
 } from "../services/holdings";
+import { getPortfolioValuation } from "../services/portfolios";
 import type { AssetRead } from "../types/asset";
 import type { HoldingRead } from "../types/holding";
+import type { PortfolioValuationRead } from "../types/portfolio";
 
 function formatDec(v: string | number | null | undefined): string {
   if (v === null || v === undefined) return "—";
@@ -50,6 +52,9 @@ export function PortfolioHoldingsPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [actionError, setActionError] = useState("");
 
+  const [valuation, setValuation] = useState<PortfolioValuationRead | null>(null);
+  const [valuationError, setValuationError] = useState("");
+
   const token = getAccessToken();
   const needsAuth = !token;
 
@@ -73,11 +78,23 @@ export function PortfolioHoldingsPage() {
   const loadHoldings = useCallback(async () => {
     if (!idValid || needsAuth) return;
     setListError("");
+    setValuationError("");
     setLoading(true);
     try {
       const data = await listHoldings(portfolioId);
       setHoldings(data);
+      try {
+        const v = await getPortfolioValuation(portfolioId);
+        setValuation(v);
+      } catch (ve) {
+        setValuation(null);
+        setValuationError(
+          ve instanceof Error ? ve.message : "Nu am putut incarca evaluarea portofoliului.",
+        );
+      }
     } catch (error) {
+      setHoldings([]);
+      setValuation(null);
       setListError(error instanceof Error ? error.message : "Nu am putut incarca detinerile.");
     } finally {
       setLoading(false);
@@ -329,6 +346,58 @@ export function PortfolioHoldingsPage() {
               </button>
             </div>
           </form>
+        </section>
+      )}
+
+      {!needsAuth && (
+        <section className="card">
+          <h4 className="subsection-title">Evaluare portofoliu</h4>
+          <p className="muted">
+            Raspuns din API: <code>GET /portfolios/:portfolioId/valuation</code> — ultimul pret cunoscut per
+            activ. Daca lipseste snapshot de pret in backend, coloana de status indica acest lucru.
+          </p>
+          {valuationError && <p className="field-error">{valuationError}</p>}
+          {loading && !valuation && !valuationError ? (
+            <p className="muted">Se incarca evaluarea...</p>
+          ) : valuation ? (
+            <>
+              <p className="valuation-total">
+                <strong>Valoare totala estimata:</strong> {formatDec(valuation.total_value)}
+              </p>
+              {valuation.assets.length === 0 ? (
+                <p className="muted">Nu exista detineri de evaluat.</p>
+              ) : (
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Simbol</th>
+                        <th>Activ</th>
+                        <th>Cantitate</th>
+                        <th>Pret</th>
+                        <th>Valoare</th>
+                        <th>Status pret</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {valuation.assets.map((row) => (
+                        <tr key={row.asset_id}>
+                          <td>{row.symbol ?? `id:${row.asset_id}`}</td>
+                          <td className="cell-muted">{row.name ?? "—"}</td>
+                          <td>{formatDec(row.quantity)}</td>
+                          <td className="cell-muted">{formatDec(row.price)}</td>
+                          <td>{formatDec(row.value)}</td>
+                          <td className="cell-muted">
+                            {row.missing_price ? "Lipseste pret" : "OK"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          ) : null}
         </section>
       )}
 

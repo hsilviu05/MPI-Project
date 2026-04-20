@@ -4,6 +4,7 @@ import type {
   PortfolioCreateBody,
   PortfolioRead,
   PortfolioUpdateBody,
+  PortfolioValuationRead,
 } from "../types/portfolio";
 
 export async function listPortfolios(): Promise<PortfolioRead[]> {
@@ -49,4 +50,12 @@ export async function deletePortfolio(id: number): Promise<PortfolioRead> {
     throw new Error(await readApiErrorMessage(response));
   }
   return (await response.json()) as PortfolioRead;
+}
+
+export async function getPortfolioValuation(portfolioId: number): Promise<PortfolioValuationRead> {
+  const response = await apiFetch(`/portfolios/${portfolioId}/valuation`);
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response));
+  }
+  return (await response.json()) as PortfolioValuationRead;
 }
