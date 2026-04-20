@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ErrorBanner } from "../components/feedback/PageStates";
 import { submitRegister } from "../services/auth";
 
 type RegisterFields = {
@@ -80,7 +81,12 @@ export function RegisterPage() {
   };
 
   return (
-    <form className="auth-form" onSubmit={onSubmit} noValidate>
+    <form
+      className="auth-form"
+      onSubmit={onSubmit}
+      noValidate
+      aria-busy={isSubmitting}
+    >
       <h2>Register</h2>
 
       <label htmlFor="register-name">Nume complet</label>
@@ -129,7 +135,7 @@ export function RegisterPage() {
         {isSubmitting ? "Se trimite..." : "Creeaza cont"}
       </button>
 
-      {apiError && <p className="field-error">{apiError}</p>}
+      {apiError && <ErrorBanner title="Inregistrare esuata" message={apiError} />}
       {hasErrors && <p className="field-error">Corecteaza campurile marcate mai sus.</p>}
 
       <p className="auth-switch">

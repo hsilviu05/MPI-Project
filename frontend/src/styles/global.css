@@ -179,6 +179,14 @@ body {
   border-top: 1px solid #e2e8f0;
 }
 
+.status .status-loading {
+  padding: 8px 0 0;
+}
+
+.status-ok {
+  margin-top: 8px;
+}
+
 @media (max-width: 900px) {
   .dashboard-shell {
     grid-template-columns: 1fr;
@@ -365,4 +373,81 @@ a.btn-link {
 .valuation-total {
   margin: 0 0 12px;
   font-size: 1.05rem;
+}
+
+.loading-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: #475569;
+}
+
+.loading-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0f172a;
+  border-radius: 50%;
+  animation: loading-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-notice-text {
+  font-size: 0.95rem;
+}
+
+.error-banner {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  color: #7f1d1d;
+}
+
+.error-banner-title {
+  display: block;
+  font-size: 0.9rem;
+  margin: 0 0 4px;
+}
+
+.error-banner-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.empty-state {
+  padding: 24px 16px;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.empty-state-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.empty-state-desc {
+  margin: 0 0 12px;
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }

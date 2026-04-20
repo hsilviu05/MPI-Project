@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { EmptyState, ErrorBanner, LoadingNotice } from "../components/feedback/PageStates";
 import { getAccessToken } from "../lib/authToken";
 import { createAsset, listAssets } from "../services/assets";
 import type { AssetRead } from "../types/asset";
@@ -101,12 +102,13 @@ export function AssetsPage() {
         </p>
 
         {needsAuth && (
-          <p className="field-error">
-            <Link to="/login">Autentifica-te</Link> pentru a gestiona activele.
-          </p>
+          <ErrorBanner
+            title="Autentificare necesara"
+            message="Catalogul de active este disponibil dupa login."
+          />
         )}
 
-        {listError && <p className="field-error">{listError}</p>}
+        {listError && <ErrorBanner title="Lista active" message={listError} />}
 
         <form className="portfolio-form" onSubmit={onCreate}>
           <h4 className="subsection-title">Adauga activ</h4>
@@ -168,9 +170,28 @@ export function AssetsPage() {
         />
 
         {loading ? (
-          <p className="muted">Se incarca...</p>
+          <LoadingNotice label="Incarcare active din API..." />
+        ) : needsAuth ? (
+          <EmptyState
+            title="Catalog indisponibil"
+            description="Autentifica-te pentru a incarca si gestiona activele."
+          >
+            <Link className="btn-link" to="/login">
+              Login
+            </Link>
+          </EmptyState>
         ) : filtered.length === 0 ? (
-          <p className="muted">{items.length === 0 ? "Nu exista inca active." : "Niciun rezultat la filtru."}</p>
+          items.length === 0 ? (
+            <EmptyState
+              title="Niciun activ in catalog"
+              description="Adauga un simbol (ex. AAPL) folosind formularul de mai sus. Activele sunt partajate pentru toate portofoliile."
+            />
+          ) : (
+            <EmptyState
+              title="Niciun rezultat"
+              description="Incearca alt termen de cautare sau sterge filtrul."
+            />
+          )
         ) : (
           <div className="table-wrap">
             <table className="data-table">
