@@ -2,6 +2,7 @@ from typing import Any, List, Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from decimal import Decimal
+from datetime import datetime, timezone
 
 from ...db import get_db
 from ...models.user import User
@@ -13,8 +14,10 @@ from ...schemas.portfolio import (
     PortfolioUpdate,
     PortfolioDetailRead,
     PortfolioValuationRead,
+    PortfolioRefreshResponse,
 )
 from ..deps import get_current_user
+from ...services.price_provider import get_latest_price, PriceProviderError, InvalidSymbolError
 
 router = APIRouter()
 
@@ -168,3 +171,98 @@ def portfolio_valuation(
         )
 
     return {"portfolio_id": portfolio.id, "total_value": total_value, "assets": assets}
+
+
+
+@router.post("/{portfolio_id}/refresh-prices", response_model=PortfolioRefreshResponse)
+def refresh_portfolio_prices(
+    *,
+    db: Session = Depends(get_db),
+    portfolio_id: int,
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """
+    Fetch latest prices for all assets used by this portfolio's holdings and save snapshots.
+    Returns per-asset status: success, failed, missing_symbol, provider_error.
+    """
+    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id, Portfolio.owner_id == current_user.id).first()
+    if not portfolio:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+
+    results: List[Dict[str, Any]] = []
+
+    seen_assets = set()
+    from ...core.config import settings as _settings
+    provider_name = _settings.price_provider
+
+    for holding in portfolio.holdings:
+        asset_id = holding.asset_id
+        if asset_id in seen_assets:
+            continue
+        seen_assets.add(asset_id)
+
+        asset = getattr(holding, "asset", None)
+        symbol = getattr(asset, "symbol", None) if asset is not None else None
+
+        if not symbol:
+            results.append({
+                "asset_id": asset_id,
+                "symbol": symbol,
+                "status": "missing_symbol",
+                "price": None,
+                "timestamp": None,
+                "message": "No symbol available for asset",
+            })
+            continue
+
+        try:
+            price = get_latest_price(symbol)
+        except InvalidSymbolError as exc:
+            results.append({
+                "asset_id": asset_id,
+                "symbol": symbol,
+                "status": "missing_symbol",
+                "price": None,
+                "timestamp": None,
+                "message": str(exc),
+            })
+            continue
+        except PriceProviderError as exc:
+            results.append({
+                "asset_id": asset_id,
+                "symbol": symbol,
+                "status": "provider_error",
+                "price": None,
+                "timestamp": None,
+                "message": str(exc),
+            })
+            continue
+        except Exception as exc:
+            results.append({
+                "asset_id": asset_id,
+                "symbol": symbol,
+                "status": "failed",
+                "price": None,
+                "timestamp": None,
+                "message": str(exc),
+            })
+            continue
+
+        # Save snapshot
+        timestamp = datetime.now(timezone.utc)
+        snapshot = PriceSnapshot(asset_id=asset_id, timestamp=timestamp, price=price, source=provider_name)
+        db.add(snapshot)
+
+        results.append({
+            "asset_id": asset_id,
+            "symbol": symbol,
+            "status": "success",
+            "price": price,
+            "timestamp": timestamp,
+            "message": None,
+        })
+
+    # persist all saved snapshots
+    db.commit()
+
+    return {"portfolio_id": portfolio.id, "results": results}

@@ -48,3 +48,20 @@ class PortfolioValuationRead(BaseModel):
 
     class Config:
         orm_mode = False
+
+
+class RefreshAssetStatus(BaseModel):
+    asset_id: int
+    symbol: Optional[str]
+    status: str  # success, failed, missing_symbol, provider_error
+    price: Optional[Decimal] = None
+    timestamp: Optional[datetime] = None
+    message: Optional[str] = None
+
+
+class PortfolioRefreshResponse(BaseModel):
+    portfolio_id: int
+    results: List[RefreshAssetStatus]
+
+    class Config:
+        orm_mode = False
