@@ -53,11 +53,16 @@ test.describe('Login Flow', () => {
             testUser.password,
             testUser.fullName
         );
+        if (page.url().includes('/login')) {
+            await TestHelpers.loginUser(page, testUser.email, testUser.password);
+        }
         await page.context().clearCookies();
         await page.evaluate(() => localStorage.clear());
         await TestHelpers.loginUser(page, testUser.email, testUser.password);
         const currentUrl = page.url();
         expect(
+            currentUrl === `${new URL(currentUrl).origin}/` ||
+            currentUrl.endsWith('/') ||
             currentUrl.includes('dashboard') ||
             currentUrl.includes('portfolios') ||
             currentUrl.includes('home')
@@ -75,7 +80,7 @@ test.describe('Login Flow', () => {
 
     test('should show link to login page from register', async ({ page }) => {
         await page.goto('/register');
-        const loginLink = page.locator('a:has-text("Intra")');
+        const loginLink = page.locator('a:has-text("login"), a:has-text("Mergi")');
         await expect(loginLink).toBeVisible();
         await loginLink.click();
         await page.waitForURL(/login/);
@@ -102,6 +107,7 @@ test.describe('Login Flow', () => {
             await page.fill('input[name="fullName"]', 'Another User');
             await page.fill('input[name="email"]', testUser.email);
             await page.fill('input[name="password"]', 'AnotherPassword123');
+            await page.fill('input[name="confirmPassword"]', 'AnotherPassword123');
             await page.click('button[type="submit"]');
             const errorText = page.locator('text=exist');
             await expect(errorText).toBeVisible({ timeout: 5000 }).catch(() => { });

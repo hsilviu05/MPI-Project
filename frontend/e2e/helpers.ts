@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 export class TestHelpers {
     static async registerUser(
@@ -11,8 +11,9 @@ export class TestHelpers {
         await page.fill('input[name="fullName"]', fullName);
         await page.fill('input[name="email"]', email);
         await page.fill('input[name="password"]', password);
+        await page.fill('input[name="confirmPassword"]', password);
         await page.click('button[type="submit"]');
-        await page.waitForURL(/login|dashboard|home/, { timeout: 10000 });
+        await page.waitForURL(/\/($|login|dashboard|portfolios|home)/, { timeout: 10000 });
     }
 
     static async loginUser(page: Page, email: string, password: string) {
@@ -20,7 +21,7 @@ export class TestHelpers {
         await page.fill('input[name="email"]', email);
         await page.fill('input[name="password"]', password);
         await page.click('button[type="submit"]');
-        await page.waitForURL(/dashboard|portfolios|home/, { timeout: 10000 });
+        await page.waitForURL(/\/($|dashboard|portfolios|home)/, { timeout: 10000 });
     }
 
     static async createPortfolio(
@@ -30,21 +31,13 @@ export class TestHelpers {
     ) {
         await page.goto('/portfolios');
 
-        const createButton = page.locator('button:has-text("Create"), button:has-text("New"), button:has-text("Add")').first();
-        if (await createButton.isVisible()) {
-            await createButton.click();
-        }
-
-        await page.fill('input[name="name"], input[placeholder*="Portfolio"], input[placeholder*="Name"]', portfolioName);
+        await page.fill('#portfolio-new-name', portfolioName);
 
         if (description) {
-            const descField = page.locator('textarea[name="description"], input[placeholder*="Description"]').first();
-            if (await descField.isVisible()) {
-                await descField.fill(description);
-            }
+            await page.fill('#portfolio-new-desc', description);
         }
 
-        const submitButton = page.locator('button[type="submit"]:has-text("Create"), button[type="submit"]:has-text("Save"), button[type="submit"]:has-text("Add")').first();
+        const submitButton = page.locator('button[type="submit"]:has-text("Adauga portofoliu")').first();
         await submitButton.click();
 
         await page.waitForTimeout(1000);
@@ -56,65 +49,42 @@ export class TestHelpers {
         symbol: string,
         quantity: number
     ) {
-        const portfolioLink = page.locator(`a:has-text("${portfolioName}"), button:has-text("${portfolioName}")`).first();
-        if (await portfolioLink.isVisible()) {
-            await portfolioLink.click();
-            await page.waitForTimeout(500);
+        await page.goto('/portfolios');
+        const portfolioRow = page.locator('tbody tr').filter({ hasText: portfolioName }).first();
+        await portfolioRow.waitFor({ state: 'visible', timeout: 10000 });
+        await portfolioRow.locator('a:has-text("Detineri")').click();
+        await page.waitForURL(/\/portfolios\/\d+\/holdings/, { timeout: 10000 });
+
+        const holdingsUrl = page.url();
+        await page.fill('#asset-filter', symbol);
+
+        let assetOption = page.locator(`#holding-asset option:has-text("${symbol}")`).first();
+        if (await assetOption.count() === 0) {
+            await page.goto('/assets');
+            await page.fill('#asset-symbol', symbol);
+            await page.fill('#asset-name', symbol);
+            await page.fill('#asset-type', 'stock');
+            await page.fill('#asset-currency', 'USD');
+            await page.locator('button[type="submit"]:has-text("Adauga activ")').click();
+            await page.goto(holdingsUrl);
+            await page.fill('#asset-filter', symbol);
+            assetOption = page.locator(`#holding-asset option:has-text("${symbol}")`).first();
         }
 
-        const addHoldingButton = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Holdings")').first();
-        if (await addHoldingButton.isVisible()) {
-            await addHoldingButton.click();
+        const assetId = await assetOption.getAttribute('value');
+        if (assetId) {
+            await page.selectOption('#holding-asset', assetId);
         }
 
-        const symbolField = page.locator('input[name="symbol"], input[placeholder*="Symbol"], input[placeholder*="symbol"]').first();
-        if (await symbolField.isVisible()) {
-            await symbolField.fill(symbol);
-        }
-
-        const quantityField = page.locator('input[name="quantity"], input[placeholder*="Quantity"], input[type="number"]').first();
-        if (await quantityField.isVisible()) {
-            await quantityField.fill(String(quantity));
-        }
-
-        const submitButton = page.locator('button[type="submit"]:has-text("Add"), button[type="submit"]:has-text("Save")').first();
-        if (await submitButton.isVisible()) {
-            await submitButton.click();
-            await page.waitForTimeout(1000);
-        }
-    }
-
-    static async expectElementWithText(
-        page: Page,
-        text: string,
-        selector?: string
-    ): Promise<Locator> {
-        const locator = selector
-            ? page.locator(selector)
-            : page.locator('body');
-
-        await locator.locator(`text=${text}`).waitFor({ timeout: 5000 });
-        return locator.locator(`text=${text}`);
+        await page.fill('#holding-qty', String(quantity));
+        await page.locator('button[type="submit"]:has-text("Adauga detinere")').click();
+        await page.waitForTimeout(1000);
     }
 
     static async waitForLoadingComplete(page: Page) {
         const loadingIndicators = page.locator('[aria-busy="true"], .loading, .spinner').first();
         await loadingIndicators.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => { });
         await page.waitForTimeout(500);
-    }
-
-    static async getPortfolioNames(page: Page): Promise<string[]> {
-        const portfolioElements = page.locator('[data-testid="portfolio-item"], li:has(a[href*="portfolio"]), .portfolio-card').all();
-        const names: string[] = [];
-
-        for (const element of await portfolioElements) {
-            const text = await element.textContent();
-            if (text) {
-                names.push(text.trim());
-            }
-        }
-
-        return names;
     }
 
     static async getPortfolioValuation(page: Page, portfolioName: string): Promise<string | null> {
