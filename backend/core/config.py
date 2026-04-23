@@ -1,4 +1,5 @@
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 from typing import Optional
 from pathlib import Path
 
@@ -19,9 +20,10 @@ class Settings(BaseSettings):
     price_provider: Optional[str] = Field(None, env="PRICE_PROVIDER")
     price_provider_api_key: Optional[str] = Field(None, env="PRICE_PROVIDER_API_KEY")
 
-    class Config:
-        env_file = str(env_path)
-        env_file_encoding = "utf-8"
+    model_config = {
+        "env_file": str(env_path),
+        "env_file_encoding": "utf-8"
+    }
 
 
 settings = Settings()

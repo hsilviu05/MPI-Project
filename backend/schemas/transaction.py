@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 ALLOWED_TRANSACTION_TYPES = {"buy", "sell"}
@@ -16,7 +16,8 @@ class TransactionCreate(BaseModel):
     fees: Optional[Decimal] = Field(Decimal("0"), ge=0)
     executed_at: Optional[datetime] = None
 
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def validate_type(cls, v: str) -> str:
         v_lower = v.strip().lower()
         if v_lower not in ALLOWED_TRANSACTION_TYPES:
@@ -31,7 +32,8 @@ class TransactionUpdate(BaseModel):
     fees: Optional[Decimal] = Field(None, ge=0)
     executed_at: Optional[datetime] = None
 
-    @validator("type", pre=True, always=False)
+    @field_validator("type", mode="before")
+    @classmethod
     def validate_type(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
@@ -51,5 +53,4 @@ class TransactionRead(BaseModel):
     executed_at: datetime
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
