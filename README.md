@@ -62,5 +62,14 @@ Our app centralizes everything into a single dashboard where users can:
 
 ```bash
 git clone <repo-url>
-cd mpi-app
+cd MPI-Project
+cp .env.example .env
 docker compose up --build
+```
+
+If you want to run the services individually instead of the full stack:
+
+- Copy `backend/.env.example` to `backend/.env` for backend-only runs
+- Copy `frontend/.env.example` to `frontend/.env` for frontend-only runs
+
+Environment and secret handling for local and production deployments is documented in [docs/environment.md](/Users/silviu/Desktop/Facultate/Sem_2/MPI/MPI-Project/docs/environment.md).

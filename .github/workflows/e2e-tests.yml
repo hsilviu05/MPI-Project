@@ -57,6 +57,7 @@ jobs:
           sleep 5
           timeout 30 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
         env:
+          APP_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost/mpi_dev
           SECRET_KEY: ci-test-secret-key-not-for-production
           DEBUG: 'true'
