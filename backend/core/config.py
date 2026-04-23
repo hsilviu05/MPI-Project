@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Optional, cast
 from urllib.parse import quote
 
 from pydantic import Field, model_validator
@@ -90,7 +90,20 @@ class Settings(BaseSettings):
 
     @classmethod
     def load(cls, *, env_file: Optional[str] = str(env_path)) -> "Settings":
-        return cast("Settings", cast(Any, cls)(_env_file=env_file))
+        if env_file == str(env_path):
+            return cast("Settings", cls())
+
+        runtime_settings_cls = type(
+            "RuntimeSettings",
+            (cls,),
+            {
+                "model_config": SettingsConfigDict(
+                    env_file=env_file,
+                    env_file_encoding="utf-8",
+                )
+            },
+        )
+        return cast("Settings", runtime_settings_cls())
 
 
 settings = Settings.load()

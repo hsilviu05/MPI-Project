@@ -1,4 +1,4 @@
-# Keep FastAPI on the Pydantic v1-compatible line used by this backend.
+# Keep FastAPI pinned to the version range validated with this backend's Pydantic v2 setup.
 fastapi>=0.95,<0.100
 uvicorn[standard]>=0.18.0
 pydantic>=2.0,<3.0
