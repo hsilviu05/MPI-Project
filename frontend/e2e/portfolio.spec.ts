@@ -22,7 +22,7 @@ test.describe('Portfolio Creation Flow', () => {
             portfolioName,
             portfolioDescription
         );
-        const createdPortfolio = authenticatedPage.locator(`text=${portfolioName}`);
+        const createdPortfolio = authenticatedPage.locator('tbody tr').filter({ hasText: portfolioName });
         await expect(createdPortfolio).toBeVisible({ timeout: 10000 });
     });
 
@@ -39,7 +39,7 @@ test.describe('Portfolio Creation Flow', () => {
             );
         }
         for (const portfolio of portfolios) {
-            const portfolioElement = authenticatedPage.locator(`text=${portfolio.name}`);
+            const portfolioElement = authenticatedPage.locator('tbody tr').filter({ hasText: portfolio.name });
             await expect(portfolioElement).toBeVisible({ timeout: 5000 });
         }
     });
@@ -47,9 +47,9 @@ test.describe('Portfolio Creation Flow', () => {
     test('should navigate to portfolio details', async ({ authenticatedPage }) => {
         const portfolioName = `Detail Portfolio ${Date.now()}`;
         await TestHelpers.createPortfolio(authenticatedPage, portfolioName);
-        const portfolioLink = authenticatedPage.locator(`text=${portfolioName}`).first();
-        await portfolioLink.click();
-        await authenticatedPage.waitForTimeout(1000);
+        const portfolioRow = authenticatedPage.locator('tbody tr').filter({ hasText: portfolioName }).first();
+        await portfolioRow.locator('a:has-text("Detineri")').click();
+        await authenticatedPage.waitForURL(/\/portfolios\/\d+\/holdings/, { timeout: 10000 });
         const currentUrl = authenticatedPage.url();
         expect(
             currentUrl.includes('portfolio') ||
@@ -61,17 +61,17 @@ test.describe('Portfolio Creation Flow', () => {
         const portfolioName = `Editable Portfolio ${Date.now()}`;
         const newName = `Updated ${portfolioName}`;
         await TestHelpers.createPortfolio(authenticatedPage, portfolioName);
-        const portfolioSection = authenticatedPage.locator(`text=${portfolioName}`).locator('..');
-        const editButton = portfolioSection.locator('button:has-text("Edit"), button:has-text("Modifica")').first();
+        const portfolioSection = authenticatedPage.locator('tbody tr').filter({ hasText: portfolioName }).first();
+        const editButton = portfolioSection.locator('button:has-text("Editeaza"), button:has-text("Edit")').first();
         if (await editButton.isVisible().catch(() => false)) {
             await editButton.click();
-            const nameField = authenticatedPage.locator('input[name="name"]');
+            const nameField = authenticatedPage.locator('#portfolio-edit-name');
             await nameField.fill(newName);
-            const saveButton = authenticatedPage.locator('button[type="submit"]:has-text("Save"), button[type="submit"]:has-text("Update")').first();
+            const saveButton = authenticatedPage.locator('button[type="submit"]:has-text("Salveaza"), button[type="submit"]:has-text("Save")').first();
             if (await saveButton.isVisible().catch(() => false)) {
                 await saveButton.click();
                 await authenticatedPage.waitForTimeout(1000);
-                const updatedPortfolio = authenticatedPage.locator(`text=${newName}`);
+                const updatedPortfolio = authenticatedPage.locator('tbody tr').filter({ hasText: newName });
                 await expect(updatedPortfolio).toBeVisible({ timeout: 5000 });
             }
         }
@@ -80,17 +80,15 @@ test.describe('Portfolio Creation Flow', () => {
     test('should delete a portfolio', async ({ authenticatedPage }) => {
         const portfolioName = `Delete Portfolio ${Date.now()}`;
         await TestHelpers.createPortfolio(authenticatedPage, portfolioName);
-        let portfolio = authenticatedPage.locator(`text=${portfolioName}`);
+        let portfolio = authenticatedPage.locator('tbody tr').filter({ hasText: portfolioName });
         await expect(portfolio).toBeVisible();
-        const portfolioSection = portfolio.locator('..');
-        const deleteButton = portfolioSection.locator('button:has-text("Delete"), button:has-text("Sterge")').first();
+        const deleteButton = portfolio.locator('button:has-text("Sterge"), button:has-text("Delete")').first();
         if (await deleteButton.isVisible().catch(() => false)) {
+            authenticatedPage.once('dialog', async (dialog) => {
+                await dialog.accept();
+            });
             await deleteButton.click();
-            const confirmButton = authenticatedPage.locator('button:has-text("Confirm"), button:has-text("Yes"), button:has-text("Confirm Delete")').first();
-            if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-                await confirmButton.click();
-            }
-            portfolio = authenticatedPage.locator(`text=${portfolioName}`);
+            portfolio = authenticatedPage.locator('tbody tr').filter({ hasText: portfolioName });
             await expect(portfolio).not.toBeVisible({ timeout: 5000 });
         }
     });
