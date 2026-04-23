@@ -1,0 +1,57 @@
+name: Config Hygiene
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/config-hygiene.yml'
+      - '.gitignore'
+      - '.env.example'
+      - 'backend/.env.example'
+      - 'frontend/.env.example'
+      - 'frontend/.env.e2e.example'
+      - 'backend/.dockerignore'
+      - 'frontend/.dockerignore'
+      - 'docs/environment.md'
+      - 'README.md'
+  push:
+    branches: [main, develop, development]
+    paths:
+      - '.github/workflows/config-hygiene.yml'
+      - '.gitignore'
+      - '.env.example'
+      - 'backend/.env.example'
+      - 'frontend/.env.example'
+      - 'frontend/.env.e2e.example'
+      - 'backend/.dockerignore'
+      - 'frontend/.dockerignore'
+      - 'docs/environment.md'
+      - 'README.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reject tracked real environment files
+        run: |
+          forbidden="$(git ls-files | grep -E '(^|/)\.env($|\..+)' | grep -vE '^(backend/\.env\.example|frontend/\.env\.example|frontend/\.env\.e2e\.example|\.env\.example)$' || true)"
+          if [ -n "$forbidden" ]; then
+            echo "Tracked environment files are not allowed:"
+            echo "$forbidden"
+            exit 1
+          fi
+
+      - name: Ensure Docker builds exclude local env files
+        run: |
+          grep -qx '\.env' backend/.dockerignore
+          grep -qx '\.env\.\*' backend/.dockerignore
+          grep -qx '\.env' frontend/.dockerignore
+          grep -qx '\.env\.\*' frontend/.dockerignore
+
+      - name: Ensure environment documentation is linked
+        run: |
+          test -f docs/environment.md
+          grep -q 'docs/environment.md' README.md
