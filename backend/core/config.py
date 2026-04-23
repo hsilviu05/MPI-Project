@@ -90,7 +90,14 @@ class Settings(BaseSettings):
 
     @classmethod
     def load(cls, *, env_file: Optional[str] = str(env_path)) -> "Settings":
-        if env_file == str(env_path):
+        is_default_env_file = False
+        if env_file is not None:
+            try:
+                is_default_env_file = Path(env_file).resolve() == env_path.resolve()
+            except OSError:
+                is_default_env_file = False
+
+        if is_default_env_file:
             return cast("Settings", cls())
 
         runtime_settings_cls = type(
