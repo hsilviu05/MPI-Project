@@ -1,4 +1,7 @@
 .env
+# JetBrains (PyCharm / IntelliJ) — setări locale, nu în repo
+.idea/
+
 __pycache__/
 *.py[cod]
 venv/

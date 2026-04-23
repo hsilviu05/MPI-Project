@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ErrorBanner, LoadingNotice } from "../components/feedback/PageStates";
 import { fetchHealth } from "../services/api";
 import type { HealthResponse } from "../types/health";
 
@@ -36,15 +37,22 @@ export function HomePage() {
       </p>
 
       <div className="status">
-        <strong>Backend status:</strong>
-        {requestStatus === "loading" && <span> Verific conexiunea...</span>}
-        {requestStatus === "success" && (
-          <span>
-            {" "}
-            OK ({health?.status}) | debug: {String(health?.debug)}
-          </span>
+        <strong>Backend status</strong>
+        {requestStatus === "loading" && (
+          <LoadingNotice label="Verific conexiunea cu serverul..." className="status-loading" />
         )}
-        {requestStatus === "error" && <span> Eroare: {errorMessage}</span>}
+        {requestStatus === "success" && (
+          <p className="status-ok muted">
+            Conexiune OK — status: <code>{health?.status}</code>, debug:{" "}
+            <code>{String(health?.debug)}</code>
+          </p>
+        )}
+        {requestStatus === "error" && (
+          <ErrorBanner
+            title="Nu s-a putut contacta backend-ul"
+            message={errorMessage || "Verifica daca API-ul ruleaza si URL-ul din .env (VITE_API_BASE_URL)."}
+          />
+        )}
       </div>
     </section>
   );
