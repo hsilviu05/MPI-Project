@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Any, Optional, cast
 from urllib.parse import quote
 
-from pydantic import BaseSettings, Field, root_validator
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 # Load `.env` from the backend package directory so `.env` can remain in `backend/`.
@@ -47,22 +48,24 @@ class Settings(BaseSettings):
     price_provider: Optional[str] = Field(None, env="PRICE_PROVIDER")
     price_provider_api_key: Optional[str] = Field(None, env="PRICE_PROVIDER_API_KEY")
 
-    @root_validator
-    def populate_database_url(cls, values):
-        if values.get("database_url"):
-            return values
+    model_config = SettingsConfigDict(env_file=str(env_path), env_file_encoding="utf-8")
+
+    @model_validator(mode="after")
+    def populate_database_url(self) -> "Settings":
+        if self.database_url:
+            return self
 
         database_url = build_database_url(
-            user=values.get("postgres_user"),
-            password=values.get("postgres_password"),
-            host=values.get("postgres_host", "localhost"),
-            port=values.get("postgres_port", 5432),
-            database=values.get("postgres_db"),
+            user=self.postgres_user,
+            password=self.postgres_password,
+            host=self.postgres_host,
+            port=self.postgres_port,
+            database=self.postgres_db,
         )
         if database_url:
-            values["database_url"] = database_url
+            self.database_url = database_url
 
-        return values
+        return self
 
     def validate_runtime(self) -> None:
         if self.app_env.strip().lower() != "production":
@@ -87,13 +90,7 @@ class Settings(BaseSettings):
 
     @classmethod
     def load(cls, *, env_file: Optional[str] = str(env_path)) -> "Settings":
-        # BaseSettings accepts `_env_file` at runtime, but static type checkers
-        # do not model that private constructor argument.
         return cast("Settings", cast(Any, cls)(_env_file=env_file))
-
-    class Config:
-        env_file = str(env_path)
-        env_file_encoding = "utf-8"
 
 
 settings = Settings.load()
