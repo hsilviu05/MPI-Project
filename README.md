@@ -21,6 +21,12 @@ Our app centralizes everything into a single dashboard where users can:
 - **Objective 3:** Deliver a clean, intuitive dashboard for financial insights  
 - **Objective 4:** Ensure scalability and performance using modern DevOps practices  
 
+### QA Scenarios
+
+- A dedicated QA scenario document is maintained in `QA_SCENARIOS.md`
+- Scenarios cover valid and invalid user flows for authentication, portfolios, holdings, pricing, and valuation
+- These scenarios are defined before implementation to validate development against clear expectations
+
 ### Target Audience
 
 - Beginner investors  
