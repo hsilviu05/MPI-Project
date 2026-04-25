@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class HoldingCreate(BaseModel):
-    portfolio_id: int
     asset_id: int
     quantity: Decimal = Field(..., ge=0)
     avg_cost: Optional[Decimal] = Field(None, ge=0)
