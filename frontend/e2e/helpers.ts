@@ -40,7 +40,7 @@ export class TestHelpers {
         const submitButton = page.locator('button[type="submit"]:has-text("Adauga portofoliu")').first();
         await submitButton.click();
 
-        await page.waitForTimeout(1000);
+        await page.locator('tbody tr').filter({ hasText: portfolioName }).first().waitFor({ state: 'visible', timeout: 15000 });
     }
 
     static async addHolding(
@@ -51,7 +51,7 @@ export class TestHelpers {
     ) {
         await page.goto('/portfolios');
         const portfolioRow = page.locator('tbody tr').filter({ hasText: portfolioName }).first();
-        await portfolioRow.waitFor({ state: 'visible', timeout: 10000 });
+        await portfolioRow.waitFor({ state: 'visible', timeout: 15000 });
         await portfolioRow.locator('a:has-text("Detineri")').click();
         await page.waitForURL(/\/portfolios\/\d+\/holdings/, { timeout: 10000 });
 
@@ -78,7 +78,7 @@ export class TestHelpers {
 
         await page.fill('#holding-qty', String(quantity));
         await page.locator('button[type="submit"]:has-text("Adauga detinere")').click();
-        await page.waitForTimeout(1000);
+        await page.locator('table tbody tr').filter({ hasText: symbol }).first().waitFor({ state: 'visible', timeout: 15000 });
     }
 
     static async waitForLoadingComplete(page: Page) {
