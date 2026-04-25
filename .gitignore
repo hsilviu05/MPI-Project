@@ -1,4 +1,18 @@
+# Environment files
 .env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+!frontend/.env.e2e.example
+
+# JetBrains (PyCharm / IntelliJ) — setări locale, nu în repo
+.idea/
+
 __pycache__/
 *.py[cod]
 venv/

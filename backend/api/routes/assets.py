@@ -7,6 +7,9 @@ from ...db import get_db
 from ...models.asset import Asset
 from ...schemas.asset import AssetCreate, AssetRead
 from ...services.price_provider import get_latest_price, PriceProviderError, InvalidSymbolError
+from ...models.price_snapshot import PriceSnapshot
+from ...core.config import settings
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -59,13 +62,32 @@ def list_assets(
 @router.get("/price/{symbol}")
 def get_price(
     symbol: str,
+    db: Session = Depends(get_db),
     current_user = Depends(deps.get_current_user),
 ):
-    """Fetch latest market price for a symbol from configured provider."""
+    """Fetch latest market price for a symbol from configured provider.
+
+    If an `Asset` with the given symbol exists in the DB, persist a
+    `PriceSnapshot` record on successful fetch. Do not persist on errors.
+    """
     try:
         price = get_latest_price(symbol)
-        return {"symbol": symbol.upper(), "price": str(price)}
     except InvalidSymbolError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid or unknown symbol")
     except PriceProviderError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Price provider unavailable")
+
+    # Persist snapshot only when asset exists locally
+    asset = db.query(Asset).filter(Asset.symbol.ilike(symbol)).first()
+    if asset:
+        snapshot = PriceSnapshot(
+            asset_id=asset.id,
+            timestamp=datetime.now(timezone.utc),
+            price=price,
+            source=(settings.price_provider or None),
+        )
+        db.add(snapshot)
+        db.commit()
+        db.refresh(snapshot)
+
+    return {"symbol": symbol.upper(), "price": str(price)}

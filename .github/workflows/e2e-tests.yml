@@ -31,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -45,14 +45,21 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
-      - name: Start backend
+      - name: Run database migrations
         working-directory: backend
-        run: |
-          nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-          sleep 5
-          timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 1; done'
+        run: python -m alembic upgrade head
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost/mpi_dev
+
+      - name: Start backend
+        run: |
+          nohup python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+          sleep 5
+          timeout 30 bash -c 'until curl -sf http://localhost:8000/health; do sleep 1; done'
+        env:
+          APP_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost/mpi_dev
+          SECRET_KEY: ci-test-secret-key-not-for-production
           DEBUG: 'true'
 
       - name: Install frontend dependencies
@@ -68,6 +75,7 @@ jobs:
         run: npm run e2e
         env:
           CI: 'true'
+          BASE_URL: http://localhost:5173
           VITE_API_BASE_URL: http://localhost:8000
 
       - name: Upload test results
@@ -88,5 +96,4 @@ jobs:
 
       - name: Backend logs
         if: failure()
-        working-directory: backend
         run: cat backend.log || true

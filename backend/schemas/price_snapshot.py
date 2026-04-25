@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field, ConfigDict, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class PriceSnapshotCreate(BaseModel):

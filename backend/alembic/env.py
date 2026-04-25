@@ -1,19 +1,22 @@
 import sys
-import os
 from logging.config import fileConfig
 from pathlib import Path
 
 from sqlalchemy import engine_from_config, pool
 from alembic import context
-from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-env_path = Path(__file__).resolve().parents[1] / ".env"
-load_dotenv(env_path)
-
 config = context.config
-config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+
+from core.config import settings
+
+if not settings.database_url:
+    raise RuntimeError(
+        "DATABASE_URL or POSTGRES_* environment variables must be set before running migrations."
+    )
+
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
