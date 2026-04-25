@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ErrorBanner } from "../components/feedback/PageStates";
+import { setAccessToken } from "../lib/authToken";
 import { submitLogin } from "../services/auth";
 
 type LoginFields = {
@@ -29,9 +31,15 @@ function validateLogin(fields: LoginFields): LoginErrors {
 }
 
 export function LoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const registered = Boolean(
+    (location.state as { registered?: boolean } | null)?.registered,
+  );
   const [fields, setFields] = useState<LoginFields>({ email: "", password: "" });
   const [errors, setErrors] = useState<LoginErrors>({});
   const [statusMessage, setStatusMessage] = useState("");
+  const [apiError, setApiError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
@@ -41,6 +49,7 @@ export function LoginPage() {
     const nextErrors = validateLogin(fields);
     setErrors(nextErrors);
     setStatusMessage("");
+    setApiError("");
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -48,16 +57,29 @@ export function LoginPage() {
 
     try {
       setIsSubmitting(true);
-      await submitLogin(fields);
-      setStatusMessage("Formular trimis. Conectarea la backend va fi activata in pasul urmator.");
+      const token = await submitLogin(fields);
+      setAccessToken(token.access_token);
+      setStatusMessage("Autentificare reusita.");
+      navigate("/", { replace: true });
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Login esuat.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form className="auth-form" onSubmit={onSubmit} noValidate>
+    <form
+      className="auth-form"
+      onSubmit={onSubmit}
+      noValidate
+      aria-busy={isSubmitting}
+    >
       <h2>Login</h2>
+
+      {registered && (
+        <p className="field-success">Cont creat. Autentifica-te cu email si parola.</p>
+      )}
 
       <label htmlFor="login-email">Email</label>
       <input
@@ -84,6 +106,7 @@ export function LoginPage() {
       </button>
 
       {statusMessage && <p className="field-success">{statusMessage}</p>}
+      {apiError && <ErrorBanner title="Autentificare esuata" message={apiError} />}
       {hasErrors && <p className="field-error">Corecteaza campurile marcate mai sus.</p>}
 
       <p className="auth-switch">

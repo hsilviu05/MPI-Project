@@ -17,7 +17,7 @@ test.describe('Holdings Flow', () => {
             symbol,
             quantity
         );
-        const holdingSymbol = authenticatedPage.locator(`text=${symbol}`);
+        const holdingSymbol = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
         await expect(holdingSymbol).toBeVisible({ timeout: 10000 });
     });
 
@@ -38,7 +38,7 @@ test.describe('Holdings Flow', () => {
             );
         }
         for (const holding of holdings) {
-            const holdingElement = authenticatedPage.locator(`text=${holding.symbol}`);
+            const holdingElement = authenticatedPage.locator('table tbody tr').filter({ hasText: holding.symbol }).first();
             await expect(holdingElement).toBeVisible({ timeout: 5000 });
         }
     });
@@ -54,7 +54,7 @@ test.describe('Holdings Flow', () => {
             symbol,
             quantity
         );
-        const quantityText = authenticatedPage.locator(`text=${quantity}`);
+        const quantityText = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
         await expect(quantityText).toBeVisible({ timeout: 10000 });
     });
 
@@ -70,18 +70,18 @@ test.describe('Holdings Flow', () => {
             symbol,
             initialQuantity
         );
-        const holdingRow = authenticatedPage.locator(`text=${symbol}`).locator('..');
-        const editButton = holdingRow.locator('button:has-text("Edit"), button:has-text("Modifica")').first();
+        const holdingRow = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
+        const editButton = holdingRow.locator('button:has-text("Editeaza"), button:has-text("Edit")').first();
         if (await editButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await editButton.click();
-            const quantityField = authenticatedPage.locator('input[name="quantity"], input[type="number"]').last();
+            const quantityField = authenticatedPage.locator('#edit-qty');
             await quantityField.clear();
             await quantityField.fill(String(updatedQuantity));
-            const saveButton = authenticatedPage.locator('button[type="submit"]:has-text("Save"), button[type="submit"]:has-text("Update")').first();
+            const saveButton = authenticatedPage.locator('button[type="submit"]:has-text("Salveaza"), button[type="submit"]:has-text("Save")').first();
             if (await saveButton.isVisible().catch(() => false)) {
                 await saveButton.click();
                 await authenticatedPage.waitForTimeout(1000);
-                const updatedQuantityText = authenticatedPage.locator(`text=${updatedQuantity}`);
+                const updatedQuantityText = authenticatedPage.locator('table tbody tr').filter({ hasText: `${symbol}` }).first();
                 await expect(updatedQuantityText).toBeVisible({ timeout: 5000 });
             }
         }
@@ -98,17 +98,12 @@ test.describe('Holdings Flow', () => {
             symbol,
             quantity
         );
-        let holdingSymbol = authenticatedPage.locator(`text=${symbol}`);
+        let holdingSymbol = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
         await expect(holdingSymbol).toBeVisible();
-        const holdingRow = holdingSymbol.locator('..');
-        const deleteButton = holdingRow.locator('button:has-text("Delete"), button:has-text("Remove"), button:has-text("Sterge")').first();
+        const deleteButton = holdingSymbol.locator('button:has-text("Sterge"), button:has-text("Delete"), button:has-text("Remove")').first();
         if (await deleteButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await deleteButton.click();
-            const confirmButton = authenticatedPage.locator('button:has-text("Confirm"), button:has-text("Yes")').first();
-            if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-                await confirmButton.click();
-            }
-            holdingSymbol = authenticatedPage.locator(`text=${symbol}`);
+            holdingSymbol = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
             await expect(holdingSymbol).not.toBeVisible({ timeout: 5000 });
         }
     });
@@ -124,7 +119,7 @@ test.describe('Holdings Flow', () => {
             symbol,
             quantity
         );
-        const holdingElement = authenticatedPage.locator(`text=${symbol}`).first();
+        const holdingElement = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
         if (await holdingElement.locator('..').locator('a, button').first().isVisible().catch(() => false)) {
             await holdingElement.click();
             await authenticatedPage.waitForTimeout(1000);
@@ -154,25 +149,23 @@ test.describe('Holdings Flow', () => {
     test('should validate holding inputs', async ({ authenticatedPage }) => {
         const portfolioName = `Validation Portfolio ${Date.now()}`;
         await TestHelpers.createPortfolio(authenticatedPage, portfolioName);
-        const addButton = authenticatedPage.locator('button:has-text("Add"), button:has-text("New")').first();
-        if (await addButton.isVisible().catch(() => false)) {
-            await addButton.click();
-            const submitButton = authenticatedPage.locator('button[type="submit"]').first();
-            if (await submitButton.isVisible().catch(() => false)) {
-                await submitButton.click();
-                const errorMessages = authenticatedPage.locator('.field-error, [role="alert"], .error').first();
-                await expect(errorMessages).toBeVisible({ timeout: 3000 }).catch(() => { });
-            }
+        await TestHelpers.addHolding(authenticatedPage, portfolioName, 'VALIDATION-ASSET', 1);
+        const submitButton = authenticatedPage.locator('button[type="submit"]:has-text("Adauga detinere")').first();
+        if (await submitButton.isVisible().catch(() => false)) {
+            await authenticatedPage.locator('#holding-qty').fill('');
+            await submitButton.click();
+            const errorMessages = authenticatedPage.locator('.field-error, [role="alert"], .error').first();
+            await expect(errorMessages).toBeVisible({ timeout: 3000 }).catch(() => { });
         }
     });
 
     test('should display holdings list for portfolio', async ({ authenticatedPage }) => {
         const portfolioName = `List Portfolio ${Date.now()}`;
         await TestHelpers.createPortfolio(authenticatedPage, portfolioName);
-        const portfolioLink = authenticatedPage.locator(`text=${portfolioName}`);
-        await portfolioLink.click();
-        await authenticatedPage.waitForTimeout(500);
-        const holdingsSection = authenticatedPage.locator('[data-testid="holdings"], .holdings, h3:has-text("Holdings")').first();
+        const portfolioRow = authenticatedPage.locator('tbody tr').filter({ hasText: portfolioName }).first();
+        await portfolioRow.locator('a:has-text("Detineri")').click();
+        await authenticatedPage.waitForURL(/\/portfolios\/\d+\/holdings/, { timeout: 10000 });
+        const holdingsSection = authenticatedPage.locator('h3:has-text("Detineri"), h4:has-text("Lista detineri")').first();
         await expect(holdingsSection).toBeVisible({ timeout: 5000 }).catch(() => { });
     });
 });

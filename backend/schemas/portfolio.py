@@ -44,5 +44,3 @@ class PortfolioValuationRead(BaseModel):
     portfolio_id: int
     total_value: Decimal
     assets: List[ValuationAsset]
-
-    model_config = ConfigDict(from_attributes=False)
