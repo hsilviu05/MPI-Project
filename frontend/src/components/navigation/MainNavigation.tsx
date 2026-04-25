@@ -1,4 +1,6 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { clearAccessToken, getAccessToken } from "../../lib/authToken";
 
 const navItems = [
   { to: "/", label: "Overview", end: true },
@@ -8,6 +10,20 @@ const navItems = [
 ];
 
 export function MainNavigation() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [hasToken, setHasToken] = useState(Boolean(getAccessToken()));
+
+  useEffect(() => {
+    setHasToken(Boolean(getAccessToken()));
+  }, [location.pathname]);
+
+  function onLogout() {
+    clearAccessToken();
+    setHasToken(false);
+    navigate("/login");
+  }
+
   return (
     <nav aria-label="Main navigation">
       <ul className="nav-list">
@@ -22,6 +38,19 @@ export function MainNavigation() {
             </NavLink>
           </li>
         ))}
+        {hasToken ? (
+          <li className="nav-list-auth">
+            <button type="button" className="nav-link nav-button" onClick={onLogout}>
+              Logout
+            </button>
+          </li>
+        ) : (
+          <li className="nav-list-auth">
+            <NavLink to="/login" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+              Login
+            </NavLink>
+          </li>
+        )}
       </ul>
     </nav>
   );

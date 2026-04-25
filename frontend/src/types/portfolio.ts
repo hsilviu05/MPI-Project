@@ -7,6 +7,12 @@ export type PortfolioRead = {
   updated_at: string;
 };
 
+export type PortfolioDetailRead = PortfolioRead & {
+  holdings: Array<{
+    id: number;
+  }>;
+};
+
 export type PortfolioCreateBody = {
   name: string;
   description?: string | null;
@@ -31,4 +37,18 @@ export type PortfolioValuationRead = {
   portfolio_id: number;
   total_value: string | number;
   assets: ValuationAsset[];
+};
+
+export type PortfolioRefreshResult = {
+  asset_id: number;
+  symbol: string | null;
+  status: "success" | "failed" | "missing_symbol" | "provider_error" | string;
+  price: string | number | null;
+  timestamp: string | null;
+  message: string | null;
+};
+
+export type PortfolioRefreshResponse = {
+  portfolio_id: number;
+  results: PortfolioRefreshResult[];
 };

@@ -102,6 +102,8 @@ body {
   background: #0f172a;
   color: #e2e8f0;
   padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .brand h1 {
@@ -118,8 +120,10 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  min-height: calc(100vh - 150px);
 }
 
 .nav-link {
@@ -138,6 +142,20 @@ body {
 .nav-link.active {
   background: #334155;
   color: #ffffff;
+}
+
+.nav-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nav-list-auth {
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .dashboard-content {
@@ -197,7 +215,12 @@ body {
   }
 
   .nav-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: unset;
+  }
+
+  .nav-list-auth {
+    margin-top: 0;
+    padding-top: 0;
   }
 }
 
@@ -294,6 +317,11 @@ body {
   color: #64748b;
 }
 
+.cell-warning {
+  color: #b45309;
+  font-weight: 600;
+}
+
 .cell-actions {
   white-space: nowrap;
   text-align: right;
@@ -336,10 +364,10 @@ a.btn-link {
 
 .select-block {
   width: 100%;
-  min-height: 120px;
+  min-height: 42px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 6px;
+  padding: 10px 12px;
   font: inherit;
   background: #fff;
 }
@@ -450,4 +478,31 @@ a.btn-link {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+}
+
+.session-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+
+.session-modal {
+  width: min(92vw, 440px);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+  padding: 20px;
+}
+
+.session-modal h3 {
+  margin: 0 0 8px;
+}
+
+.session-modal p {
+  margin: 0 0 14px;
+  color: #334155;
 }
