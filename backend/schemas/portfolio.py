@@ -46,10 +46,9 @@ class PortfolioValuationRead(BaseModel):
     total_value: Decimal
     assets: List[ValuationAsset]
 
-<<<<<<< Updated upstream
     class Config:
         orm_mode = False
-=======
+
 
 class PortfolioRefreshResult(BaseModel):
     asset_id: int
@@ -63,4 +62,3 @@ class PortfolioRefreshResult(BaseModel):
 class PortfolioRefreshResponse(BaseModel):
     portfolio_id: int
     results: List[PortfolioRefreshResult]
->>>>>>> Stashed changes

@@ -1,6 +1,4 @@
 fastapi>=0.95.0
-# Keep FastAPI pinned to the version range validated with this backend's Pydantic v2 setup.
-fastapi>=0.110,<1.0
 uvicorn[standard]>=0.18.0
 pydantic>=1.10,<2.0
 python-dotenv>=1.0.0
