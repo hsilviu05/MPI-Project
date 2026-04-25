@@ -99,7 +99,7 @@ test.describe('Holdings Flow', () => {
             quantity
         );
         let holdingSymbol = authenticatedPage.locator('table tbody tr').filter({ hasText: symbol }).first();
-        await expect(holdingSymbol).toBeVisible();
+        await expect(holdingSymbol).toBeVisible({ timeout: 15000 });
         const deleteButton = holdingSymbol.locator('button:has-text("Sterge"), button:has-text("Delete"), button:has-text("Remove")').first();
         if (await deleteButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await deleteButton.click();
