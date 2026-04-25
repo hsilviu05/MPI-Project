@@ -46,7 +46,7 @@ class TestPortfolioCreation:
         }
         response = client.post("/portfolios/", json=portfolio_data)
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_create_portfolio_missing_required_fields(
         self, authenticated_client: TestClient
@@ -255,10 +255,9 @@ class TestPortfolioDelete:
         asset_id = asset_response.json()["id"]
 
         # Create holding
-        from decimal import Decimal
         holding_response = auth_client.post(
             f"/portfolios/{portfolio_id}/holdings/",
-            json={"asset_id": asset_id, "quantity": Decimal("10")},
+            json={"asset_id": asset_id, "quantity": "10"},
         )
         holding_id = holding_response.json()["id"]
 

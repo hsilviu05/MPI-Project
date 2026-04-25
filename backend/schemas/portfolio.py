@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Optional, List
-
-from pydantic import BaseModel, Field, ConfigDict
 from decimal import Decimal
+from typing import List, Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from backend.schemas.holding import HoldingRead
 
 
 class PortfolioCreate(BaseModel):
@@ -27,7 +29,7 @@ class PortfolioRead(BaseModel):
 
 
 class PortfolioDetailRead(PortfolioRead):
-    holdings: List["HoldingRead"] = []
+    holdings: List[HoldingRead] = []
 
 
 class ValuationAsset(BaseModel):
@@ -44,3 +46,17 @@ class PortfolioValuationRead(BaseModel):
     portfolio_id: int
     total_value: Decimal
     assets: List[ValuationAsset]
+
+
+class PortfolioRefreshResult(BaseModel):
+    asset_id: int
+    symbol: Optional[str]
+    status: Literal["success", "failed", "missing_symbol", "provider_error"]
+    price: Optional[Decimal]
+    timestamp: Optional[datetime]
+    message: Optional[str] = None
+
+
+class PortfolioRefreshResponse(BaseModel):
+    portfolio_id: int
+    results: List[PortfolioRefreshResult]

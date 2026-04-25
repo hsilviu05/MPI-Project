@@ -159,7 +159,7 @@ class TestAuthToken:
         """Test accessing protected route without token."""
         response = client.get("/portfolios/")
         
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_access_protected_route_with_invalid_token(self, client: TestClient):
         """Test accessing protected route with invalid token."""

@@ -9,7 +9,6 @@ ALLOWED_TRANSACTION_TYPES = {"buy", "sell"}
 
 
 class TransactionCreate(BaseModel):
-    holding_id: int
     type: str
     quantity: Decimal = Field(..., gt=0)
     price: Decimal = Field(..., gt=0)

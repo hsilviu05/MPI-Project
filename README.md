@@ -73,3 +73,52 @@ If you want to run the services individually instead of the full stack:
 - Copy `frontend/.env.example` to `frontend/.env` for frontend-only runs
 
 Environment and secret handling for local and production deployments is documented in [docs/environment.md](/Users/silviu/Desktop/Facultate/Sem_2/MPI/MPI-Project/docs/environment.md).
+
+---
+
+# 5. Deployment (Render)
+
+The project auto-deploys to [Render](https://render.com) on every merge to `main`, gated by the full test suite (backend + E2E).
+
+### One-time setup
+
+1. **Create a Render account** at https://render.com and connect your GitHub repository.
+
+2. **Apply the Blueprint** — in the Render dashboard click *New → Blueprint* and select this repository. Render reads `render.yaml` and creates:
+   - `mpi-project-db` — PostgreSQL 15 (free tier)
+   - `mpi-backend` — FastAPI container (runs Alembic migrations on startup)
+   - `mpi-frontend` — React/nginx container
+
+3. **Set manual environment variables** in the Render dashboard after the Blueprint is applied:
+
+   | Service | Key | Value |
+   |---------|-----|-------|
+   | `mpi-backend` | `PRICE_PROVIDER_API_KEY` | Your Alpha Vantage key |
+   | `mpi-frontend` | `VITE_API_BASE_URL` | `https://mpi-backend.onrender.com` |
+
+   > `VITE_API_BASE_URL` is baked into the frontend at build time, so it must be set before the first deploy.
+
+4. **Copy deploy hooks** — in Render go to each service → *Settings → Deploy Hook* and add the URLs as GitHub repository secrets:
+
+   | Secret name | Render service |
+   |-------------|----------------|
+   | `RENDER_BACKEND_DEPLOY_HOOK` | `mpi-backend` |
+   | `RENDER_FRONTEND_DEPLOY_HOOK` | `mpi-frontend` |
+
+5. **Add a `production` environment** in GitHub (*Settings → Environments*) and optionally add protection rules (required reviewers, etc.).
+
+### How it works
+
+```
+merge to main
+     │
+     ▼
+GitHub Actions: deploy.yml
+     ├─ backend-tests  (pytest)
+     ├─ e2e-tests      (Playwright / Chromium)  [needs backend-tests]
+     └─ deploy         [needs both]
+          ├─ curl RENDER_BACKEND_DEPLOY_HOOK  → triggers mpi-backend rebuild
+          └─ curl RENDER_FRONTEND_DEPLOY_HOOK → triggers mpi-frontend rebuild
+```
+
+Render rebuilds the Docker image, runs migrations (`alembic upgrade head`), and swaps to the new container with zero downtime.
