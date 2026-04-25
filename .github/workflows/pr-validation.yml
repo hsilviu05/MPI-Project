@@ -1,0 +1,131 @@
+name: PR Quality Validation
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate PR references issue
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if ! echo "$PR_BODY" | grep -qE "#[0-9]+|Closes|closes|Fixes|fixes"; then
+            echo "⚠️ PR does not reference an issue. Please reference the issue this PR addresses."
+            exit 1
+          fi
+          echo "✅ PR references an issue"
+      
+      - name: Validate acceptance criteria checkbox
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if ! echo "$PR_BODY" | grep -q "I have reviewed the issue's acceptance criteria"; then
+            echo "❌ PR template not properly filled. Please use the PR template."
+            exit 1
+          fi
+          echo "✅ PR template properly used"
+      
+      - name: Check for test coverage claim
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if ! echo "$PR_BODY" | grep -qE "\[x\].*test"; then
+            echo "⚠️ No tests marked as added/updated. Please ensure tests are included."
+          else
+            echo "✅ Tests claimed to be added/updated"
+          fi
+      
+      - name: Comment on PR if issues found
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ PR Quality Checks Failed\n\nPlease ensure:\n- [ ] PR references the issue it addresses\n- [ ] PR template is properly filled out\n- [ ] Acceptance criteria section is completed\n- [ ] Tests are included or documented\n\nSee the [PR Template](${context.payload.pull_request.head.repo.html_url}/blob/${context.payload.pull_request.head.ref}/.github/pull_request_template.md) for details.`
+            })
+
+  validate-bug-pr:
+    if: contains(github.event.pull_request.labels.*.name, 'bug')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate bug fix PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            const hasStepsToReproduce = body.includes('Steps to Reproduce');
+            const hasBugRef = body.match(/#\d+/) !== null;
+            
+            if (!hasBugRef) {
+              console.log('ℹ️ Bug fix PR should reference the bug issue');
+            }
+            
+            if (hasStepsToReproduce) {
+              console.log('✅ Bug fix references issue with reproduction steps');
+            }
+
+  check-linked-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: read
+    
+    steps:
+      - name: Extract issue reference from PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            // Extract issue numbers from PR body
+            const matches = body.match(/#(\d+)/g);
+            if (!matches) {
+              console.log('ℹ️ No issue reference found in PR');
+              return;
+            }
+            
+            const issueNum = matches[0].replace('#', '');
+            console.log(`Found reference to issue #${issueNum}`);
+            
+            // Get the issue to check its properties
+            try {
+              const issue = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNum
+              });
+              
+              console.log(`Issue type: ${issue.data.labels.map(l => l.name).join(', ')}`);
+              
+              // Check if bug issue has steps to reproduce
+              if (issue.data.labels.some(l => l.name === 'bug')) {
+                if (!issue.data.body.includes('Steps to Reproduce')) {
+                  console.log('⚠️ Bug issue may not have reproduction steps documented');
+                }
+              }
+            } catch (err) {
+              console.log(`Could not fetch issue: ${err.message}`);
+            }
