@@ -24,11 +24,6 @@ class RefreshResult(BaseModel):
     timestamp: Optional[datetime]
     message: Optional[str]
 
-
-class PortfolioRefreshResponse(BaseModel):
-    portfolio_id: int
-    results: List[RefreshResult]
-
 class PortfolioRead(BaseModel):
     id: int
     name: str

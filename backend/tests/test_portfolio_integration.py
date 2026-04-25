@@ -117,8 +117,8 @@ class TestPortfolioRetrieval:
 
     def test_get_other_user_portfolio_is_not_visible(self, client: TestClient):
         """Test that one user cannot access another user's portfolio."""
-        user1_data = {"email": "user1@portfolio.test", "password": "password123"}
-        user2_data = {"email": "user2@portfolio.test", "password": "password123"}
+        user1_data = {"email": "user1@portfolio.example.com", "password": "password123"}
+        user2_data = {"email": "user2@portfolio.example.com", "password": "password123"}
 
         client.post("/auth/register", json=user1_data)
         response1 = client.post(
