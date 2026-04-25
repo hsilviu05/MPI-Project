@@ -61,7 +61,7 @@ class TestPortfolioValuationEmpty:
         assert response.status_code == 200
         data = response.json()
         assert data["portfolio_id"] == test_portfolio
-        assert data["total_value"] == Decimal("0")
+        assert Decimal(data["total_value"]) == Decimal("0")
         assert data["assets"] == []
 
     def test_valuation_missing_prices(
@@ -75,7 +75,7 @@ class TestPortfolioValuationEmpty:
 
         # Create holdings without price snapshots
         asset_id = test_assets[0]
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("10")}
+        holding_data = {"asset_id": asset_id, "quantity": "10"}
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -86,12 +86,12 @@ class TestPortfolioValuationEmpty:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["total_value"] == Decimal("0")
+        assert Decimal(data["total_value"]) == Decimal("0")
         assert len(data["assets"]) == 1
 
         asset = data["assets"][0]
         assert asset["asset_id"] == asset_id
-        assert asset["quantity"] == Decimal("10")
+        assert Decimal(asset["quantity"]) == Decimal("10")
         assert asset["missing_price"] is True
         assert asset["price"] is None
         assert asset["value"] is None
@@ -112,7 +112,7 @@ class TestPortfolioValuationSingleAsset:
         asset_id = test_assets[0]
 
         # Create holding
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("10.5")}
+        holding_data = {"asset_id": asset_id, "quantity": "10.5"}
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -127,14 +127,14 @@ class TestPortfolioValuationSingleAsset:
         data = response.json()
         
         # Expected value: 10.5 * 100.50 = 1055.25
-        assert data["total_value"] == Decimal("1055.25")
+        assert Decimal(data["total_value"]) == Decimal("1055.25")
         assert len(data["assets"]) == 1
 
         asset = data["assets"][0]
         assert asset["asset_id"] == asset_id
-        assert asset["quantity"] == Decimal("10.5")
-        assert asset["price"] == Decimal("100.50")
-        assert asset["value"] == Decimal("1055.25")
+        assert Decimal(asset["quantity"]) == Decimal("10.5")
+        assert Decimal(asset["price"]) == Decimal("100.50")
+        assert Decimal(asset["value"]) == Decimal("1055.25")
         assert asset["missing_price"] is False
 
     def test_valuation_fractional_quantities(
@@ -149,7 +149,7 @@ class TestPortfolioValuationSingleAsset:
         asset_id = test_assets[0]
 
         # Create holding with fractional quantity
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("0.001234")}
+        holding_data = {"asset_id": asset_id, "quantity": "0.001234"}
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -164,7 +164,7 @@ class TestPortfolioValuationSingleAsset:
         data = response.json()
         
         # Expected value: 0.001234 * 50000 = 61.7
-        assert data["total_value"] == Decimal("61.7")
+        assert Decimal(data["total_value"]) == Decimal("61.7")
 
 
 class TestPortfolioValuationMultipleAssets:
@@ -184,12 +184,12 @@ class TestPortfolioValuationMultipleAssets:
         asset1_id = test_assets[0]
         asset2_id = test_assets[1]
 
-        holding1_data = {"asset_id": asset1_id, "quantity": Decimal("10")}
+        holding1_data = {"asset_id": asset1_id, "quantity": "10"}
         auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding1_data
         )
 
-        holding2_data = {"asset_id": asset2_id, "quantity": Decimal("20")}
+        holding2_data = {"asset_id": asset2_id, "quantity": "20"}
         auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding2_data
         )
@@ -205,7 +205,7 @@ class TestPortfolioValuationMultipleAssets:
         data = response.json()
         
         # Expected: (10 * 100) + (20 * 50) = 1000 + 1000 = 2000
-        assert data["total_value"] == Decimal("2000")
+        assert Decimal(data["total_value"]) == Decimal("2000")
         assert len(data["assets"]) == 2
 
     def test_valuation_mixed_with_missing_prices(
@@ -220,7 +220,7 @@ class TestPortfolioValuationMultipleAssets:
 
         # Create holdings for all three assets
         for asset_id in test_assets:
-            holding_data = {"asset_id": asset_id, "quantity": Decimal("10")}
+            holding_data = {"asset_id": asset_id, "quantity": "10"}
             auth_client.post(
                 f"/portfolios/{test_portfolio}/holdings/", json=holding_data
             )
@@ -237,7 +237,7 @@ class TestPortfolioValuationMultipleAssets:
         data = response.json()
         
         # Expected: (10 * 100) + (10 * 50) + 0 = 1500
-        assert data["total_value"] == Decimal("1500")
+        assert Decimal(data["total_value"]) == Decimal("1500")
         assert len(data["assets"]) == 3
 
         # Check that missing price is correctly flagged
@@ -262,7 +262,7 @@ class TestPortfolioValuationPriceUpdates:
         asset_id = test_assets[0]
 
         # Create holding
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("10")}
+        holding_data = {"asset_id": asset_id, "quantity": "10"}
         auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -273,7 +273,7 @@ class TestPortfolioValuationPriceUpdates:
         # Get initial valuation
         response = auth_client.get(f"/portfolios/{test_portfolio}/valuation")
         initial_value = response.json()["total_value"]
-        assert initial_value == Decimal("1000")
+        assert Decimal(initial_value) == Decimal("1000")
 
         # Add newer price snapshot
         add_price_snapshot(db, asset_id, Decimal("150"))
@@ -281,7 +281,7 @@ class TestPortfolioValuationPriceUpdates:
         # Get updated valuation
         response = auth_client.get(f"/portfolios/{test_portfolio}/valuation")
         updated_value = response.json()["total_value"]
-        assert updated_value == Decimal("1500")
+        assert Decimal(updated_value) == Decimal("1500")
 
     def test_valuation_with_price_increase(
         self,
@@ -295,7 +295,7 @@ class TestPortfolioValuationPriceUpdates:
         asset_id = test_assets[0]
 
         # Create holding
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("100")}
+        holding_data = {"asset_id": asset_id, "quantity": "100"}
         auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -303,12 +303,12 @@ class TestPortfolioValuationPriceUpdates:
         # Initial price: $10
         add_price_snapshot(db, asset_id, Decimal("10"))
         response = auth_client.get(f"/portfolios/{test_portfolio}/valuation")
-        assert response.json()["total_value"] == Decimal("1000")
+        assert Decimal(response.json()["total_value"]) == Decimal("1000")
 
         # Price increases to $50
         add_price_snapshot(db, asset_id, Decimal("50"))
         response = auth_client.get(f"/portfolios/{test_portfolio}/valuation")
-        assert response.json()["total_value"] == Decimal("5000")
+        assert Decimal(response.json()["total_value"]) == Decimal("5000")
 
     def test_valuation_with_price_decrease(
         self,
@@ -322,7 +322,7 @@ class TestPortfolioValuationPriceUpdates:
         asset_id = test_assets[0]
 
         # Create holding
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("50")}
+        holding_data = {"asset_id": asset_id, "quantity": "50"}
         auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -330,12 +330,12 @@ class TestPortfolioValuationPriceUpdates:
         # Initial price: $200
         add_price_snapshot(db, asset_id, Decimal("200"))
         response = auth_client.get(f"/portfolios/{test_portfolio}/valuation")
-        assert response.json()["total_value"] == Decimal("10000")
+        assert Decimal(response.json()["total_value"]) == Decimal("10000")
 
         # Price decreases to $100
         add_price_snapshot(db, asset_id, Decimal("100"))
         response = auth_client.get(f"/portfolios/{test_portfolio}/valuation")
-        assert response.json()["total_value"] == Decimal("5000")
+        assert Decimal(response.json()["total_value"]) == Decimal("5000")
 
 
 class TestPortfolioValuationAssetData:
@@ -353,7 +353,7 @@ class TestPortfolioValuationAssetData:
         asset_id = test_assets[0]
 
         # Create holding
-        holding_data = {"asset_id": asset_id, "quantity": Decimal("10")}
+        holding_data = {"asset_id": asset_id, "quantity": "10"}
         auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -403,7 +403,7 @@ class TestPortfolioValuationUserIsolation:
         # Create holding
         client.post(
             f"/portfolios/{portfolio_id}/holdings/",
-            json={"asset_id": asset_id, "quantity": Decimal("10")},
+            json={"asset_id": asset_id, "quantity": "10"},
             headers=headers1,
         )
 

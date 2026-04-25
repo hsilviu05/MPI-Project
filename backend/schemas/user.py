@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class UserCreate(BaseModel):
-    email: str = Field(..., max_length=255)
+    email: EmailStr = Field(..., max_length=255)
     password: str = Field(..., min_length=8)
     full_name: Optional[str] = Field(None, max_length=255)
 

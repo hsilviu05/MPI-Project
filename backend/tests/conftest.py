@@ -115,12 +115,9 @@ def test_user(client: TestClient, test_user_data: dict):
 
 
 @pytest.fixture
-def auth_token(client: TestClient, test_user_data: dict) -> str:
+def auth_token(client: TestClient, test_user: dict, test_user_data: dict) -> str:
     """Get an authentication token for the test user."""
-    # Register user
-    client.post("/auth/register", json=test_user_data)
-    
-    # Login and get token
+    # User already registered by test_user fixture; just login
     login_data = {
         "username": test_user_data["email"],
         "password": test_user_data["password"],

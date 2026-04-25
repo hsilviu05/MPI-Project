@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const frontendPort = process.env.FRONTEND_PORT || '5173';
+const frontendUrl = process.env.BASE_URL || `http://localhost:${frontendPort}`;
+
 export default defineConfig({
     testDir: './e2e',
     fullyParallel: true,
@@ -11,7 +14,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
     use: {
-        baseURL: process.env.BASE_URL || 'http://localhost:5173',
+        baseURL: frontendUrl,
         trace: 'on-first-retry',
     },
 
@@ -33,8 +36,8 @@ export default defineConfig({
     ],
 
     webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:5173',
+        command: `npm run dev -- --port ${frontendPort}`,
+        url: frontendUrl,
         reuseExistingServer: !process.env.CI,
     },
 });

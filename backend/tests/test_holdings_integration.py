@@ -44,8 +44,8 @@ class TestHoldingCreation:
         """Test successful holding creation."""
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10.5"),
-            "avg_cost": Decimal("100.00"),
+            "quantity": "10.5",
+            "avg_cost": "100.00",
         }
         response = authenticated_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -55,8 +55,8 @@ class TestHoldingCreation:
         data = response.json()
         assert data["asset_id"] == test_asset
         assert data["portfolio_id"] == test_portfolio
-        assert data["quantity"] == Decimal("10.5")
-        assert data["avg_cost"] == Decimal("100.00")
+        assert Decimal(data["quantity"]) == Decimal("10.5")
+        assert Decimal(data["avg_cost"]) == Decimal("100.00")
         assert "id" in data
         assert "created_at" in data
 
@@ -66,7 +66,7 @@ class TestHoldingCreation:
         """Test holding creation without average cost."""
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10"),
+            "quantity": "10",
         }
         response = authenticated_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -74,7 +74,7 @@ class TestHoldingCreation:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["quantity"] == Decimal("10")
+        assert Decimal(data["quantity"]) == Decimal("10")
         assert data["avg_cost"] is None
 
     def test_create_holding_zero_quantity(
@@ -83,7 +83,7 @@ class TestHoldingCreation:
         """Test holding creation with zero quantity."""
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("0"),
+            "quantity": "0",
         }
         response = authenticated_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -91,7 +91,7 @@ class TestHoldingCreation:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["quantity"] == Decimal("0")
+        assert Decimal(data["quantity"]) == Decimal("0")
 
     def test_create_holding_negative_quantity_fails(
         self, authenticated_client: TestClient, test_portfolio: int, test_asset: int
@@ -99,7 +99,7 @@ class TestHoldingCreation:
         """Test that negative quantity fails."""
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("-10"),
+            "quantity": "-10",
         }
         response = authenticated_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -113,7 +113,7 @@ class TestHoldingCreation:
         """Test holding creation fails with non-existent portfolio."""
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10"),
+            "quantity": "10",
         }
         response = authenticated_client.post(
             "/portfolios/99999/holdings/", json=holding_data
@@ -128,7 +128,7 @@ class TestHoldingCreation:
         """Test holding creation fails with non-existent asset."""
         holding_data = {
             "asset_id": 99999,
-            "quantity": Decimal("10"),
+            "quantity": "10",
         }
         response = authenticated_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -141,11 +141,11 @@ class TestHoldingCreation:
         """Test holding creation fails without authentication."""
         holding_data = {
             "asset_id": 1,
-            "quantity": Decimal("10"),
+            "quantity": "10",
         }
         response = client.post("/portfolios/1/holdings/", json=holding_data)
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestHoldingRetrieval:
@@ -171,14 +171,14 @@ class TestHoldingRetrieval:
         auth_client = authenticated_client
 
         # Create first holding
-        holding1_data = {"asset_id": test_asset, "quantity": Decimal("10")}
+        holding1_data = {"asset_id": test_asset, "quantity": "10"}
         response1 = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding1_data
         )
         holding1_id = response1.json()["id"]
 
         # Create second holding
-        holding2_data = {"asset_id": another_asset, "quantity": Decimal("20")}
+        holding2_data = {"asset_id": another_asset, "quantity": "20"}
         response2 = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding2_data
         )
@@ -213,21 +213,21 @@ class TestHoldingUpdate:
         auth_client = authenticated_client
 
         # Create holding
-        holding_data = {"asset_id": test_asset, "quantity": Decimal("10")}
+        holding_data = {"asset_id": test_asset, "quantity": "10"}
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
         holding_id = response.json()["id"]
 
         # Update holding
-        update_data = {"quantity": Decimal("15")}
+        update_data = {"quantity": "15"}
         response = auth_client.put(
             f"/portfolios/{test_portfolio}/holdings/{holding_id}",
             json=update_data,
         )
 
         assert response.status_code == 200
-        assert response.json()["quantity"] == Decimal("15")
+        assert Decimal(response.json()["quantity"]) == Decimal("15")
 
     def test_update_holding_avg_cost(
         self, authenticated_client: TestClient, test_portfolio: int, test_asset: int
@@ -238,8 +238,8 @@ class TestHoldingUpdate:
         # Create holding
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10"),
-            "avg_cost": Decimal("100"),
+            "quantity": "10",
+            "avg_cost": "100",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -247,14 +247,14 @@ class TestHoldingUpdate:
         holding_id = response.json()["id"]
 
         # Update average cost
-        update_data = {"avg_cost": Decimal("150")}
+        update_data = {"avg_cost": "150"}
         response = auth_client.put(
             f"/portfolios/{test_portfolio}/holdings/{holding_id}",
             json=update_data,
         )
 
         assert response.status_code == 200
-        assert response.json()["avg_cost"] == Decimal("150")
+        assert Decimal(response.json()["avg_cost"]) == Decimal("150")
 
     def test_update_holding_partial(
         self, authenticated_client: TestClient, test_portfolio: int, test_asset: int
@@ -265,8 +265,8 @@ class TestHoldingUpdate:
         # Create holding
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10"),
-            "avg_cost": Decimal("100"),
+            "quantity": "10",
+            "avg_cost": "100",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -274,7 +274,7 @@ class TestHoldingUpdate:
         holding_id = response.json()["id"]
 
         # Update only quantity
-        update_data = {"quantity": Decimal("20")}
+        update_data = {"quantity": "20"}
         response = auth_client.put(
             f"/portfolios/{test_portfolio}/holdings/{holding_id}",
             json=update_data,
@@ -282,14 +282,14 @@ class TestHoldingUpdate:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["quantity"] == Decimal("20")
-        assert data["avg_cost"] == Decimal("100")
+        assert Decimal(data["quantity"]) == Decimal("20")
+        assert Decimal(data["avg_cost"]) == Decimal("100")
 
     def test_update_nonexistent_holding(
         self, authenticated_client: TestClient, test_portfolio: int
     ):
         """Test updating non-existent holding."""
-        update_data = {"quantity": Decimal("15")}
+        update_data = {"quantity": "15"}
         response = authenticated_client.put(
             f"/portfolios/{test_portfolio}/holdings/99999",
             json=update_data,
@@ -308,7 +308,7 @@ class TestHoldingDelete:
         auth_client = authenticated_client
 
         # Create holding
-        holding_data = {"asset_id": test_asset, "quantity": Decimal("10")}
+        holding_data = {"asset_id": test_asset, "quantity": "10"}
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
         )
@@ -350,8 +350,8 @@ class TestHoldingWithTransactions:
         # Create holding
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10"),
-            "avg_cost": Decimal("100"),
+            "quantity": "10",
+            "avg_cost": "100",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -361,9 +361,9 @@ class TestHoldingWithTransactions:
         # Create buy transaction
         transaction_data = {
             "type": "buy",
-            "quantity": Decimal("5"),
-            "price": Decimal("110"),
-            "fees": Decimal("10"),
+            "quantity": "5",
+            "price": "110",
+            "fees": "10",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/{holding_id}/transactions/",
@@ -381,7 +381,7 @@ class TestHoldingWithTransactions:
 
         # quantity: 10 + 5 = 15
         # cost: (100*10 + 110*5 + 10) / 15 = 1210 / 15 ≈ 80.67
-        assert holding["quantity"] == Decimal("15")
+        assert Decimal(holding["quantity"]) == Decimal("15")
 
     def test_holding_quantity_updated_on_sell_transaction(
         self, authenticated_client: TestClient, test_portfolio: int, test_asset: int
@@ -392,8 +392,8 @@ class TestHoldingWithTransactions:
         # Create holding with 20 units
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("20"),
-            "avg_cost": Decimal("100"),
+            "quantity": "20",
+            "avg_cost": "100",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -403,8 +403,8 @@ class TestHoldingWithTransactions:
         # Create sell transaction
         transaction_data = {
             "type": "sell",
-            "quantity": Decimal("5"),
-            "price": Decimal("150"),
+            "quantity": "5",
+            "price": "150",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/{holding_id}/transactions/",
@@ -421,7 +421,7 @@ class TestHoldingWithTransactions:
         holding = [h for h in holdings if h["id"] == holding_id][0]
 
         # quantity: 20 - 5 = 15
-        assert holding["quantity"] == Decimal("15")
+        assert Decimal(holding["quantity"]) == Decimal("15")
 
     def test_sell_more_than_holding_fails(
         self, authenticated_client: TestClient, test_portfolio: int, test_asset: int
@@ -432,7 +432,7 @@ class TestHoldingWithTransactions:
         # Create holding with 10 units
         holding_data = {
             "asset_id": test_asset,
-            "quantity": Decimal("10"),
+            "quantity": "10",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/", json=holding_data
@@ -442,8 +442,8 @@ class TestHoldingWithTransactions:
         # Try to sell 20 units
         transaction_data = {
             "type": "sell",
-            "quantity": Decimal("20"),
-            "price": Decimal("150"),
+            "quantity": "20",
+            "price": "150",
         }
         response = auth_client.post(
             f"/portfolios/{test_portfolio}/holdings/{holding_id}/transactions/",
@@ -487,7 +487,7 @@ class TestHoldingUserIsolation:
         # Create holding
         response = client.post(
             f"/portfolios/{portfolio_id}/holdings/",
-            json={"asset_id": asset_id, "quantity": Decimal("10")},
+            json={"asset_id": asset_id, "quantity": "10"},
             headers=headers1,
         )
         holding_id = response.json()["id"]
