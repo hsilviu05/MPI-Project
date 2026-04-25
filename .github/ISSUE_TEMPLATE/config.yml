@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project Documentation
+    url: https://github.com/yourorg/MPI-Project/wiki
+    about: Visit our project wiki for guides and architecture docs
+  - name: QA Scenarios
+    url: https://github.com/yourorg/MPI-Project/blob/main/QA_SCENARIOS.md
+    about: Reference QA scenarios for feature validation

@@ -10,10 +10,10 @@ import {
   listHoldings,
   updateHolding,
 } from "../services/holdings";
-import { getPortfolioValuation } from "../services/portfolios";
+import { getPortfolioValuation, refreshPortfolioPrices } from "../services/portfolios";
 import type { AssetRead } from "../types/asset";
 import type { HoldingRead } from "../types/holding";
-import type { PortfolioValuationRead } from "../types/portfolio";
+import type { PortfolioRefreshResponse, PortfolioValuationRead } from "../types/portfolio";
 
 function formatDec(v: string | number | null | undefined): string {
   if (v === null || v === undefined) return "—";
@@ -55,6 +55,10 @@ export function PortfolioHoldingsPage() {
 
   const [valuation, setValuation] = useState<PortfolioValuationRead | null>(null);
   const [valuationError, setValuationError] = useState("");
+  const [refreshingPrices, setRefreshingPrices] = useState(false);
+  const [refreshError, setRefreshError] = useState("");
+  const [refreshSuccess, setRefreshSuccess] = useState("");
+  const [lastRefresh, setLastRefresh] = useState<PortfolioRefreshResponse | null>(null);
 
   const token = getAccessToken();
   const needsAuth = !token;
@@ -215,6 +219,43 @@ export function PortfolioHoldingsPage() {
     }
   };
 
+  const onRefreshPrices = async () => {
+    if (needsAuth || refreshingPrices || !idValid) return;
+    setRefreshError("");
+    setRefreshSuccess("");
+    setValuationError("");
+    try {
+      setRefreshingPrices(true);
+      const refreshResult = await refreshPortfolioPrices(portfolioId);
+      setLastRefresh(refreshResult);
+      const okCount = refreshResult.results.filter((r) => r.status === "success").length;
+      const failCount = refreshResult.results.length - okCount;
+      setRefreshSuccess(
+        failCount === 0
+          ? `Preturile au fost actualizate pentru ${okCount} active.`
+          : `Refresh finalizat: ${okCount} active actualizate, ${failCount} cu probleme.`,
+      );
+
+      const nextValuation = await getPortfolioValuation(portfolioId);
+      setValuation(nextValuation);
+    } catch (error) {
+      setRefreshError(error instanceof Error ? error.message : "Nu am putut face refresh la preturi.");
+      try {
+        const fallbackValuation = await getPortfolioValuation(portfolioId);
+        setValuation(fallbackValuation);
+      } catch (valuationLoadError) {
+        setValuation(null);
+        setValuationError(
+          valuationLoadError instanceof Error
+            ? valuationLoadError.message
+            : "Nu am putut reincarca evaluarea dupa refresh.",
+        );
+      }
+    } finally {
+      setRefreshingPrices(false);
+    }
+  };
+
   if (!idValid) {
     return (
       <section className="card">
@@ -272,9 +313,8 @@ export function PortfolioHoldingsPage() {
             onChange={(e) => setSelectedAssetId(e.target.value)}
             disabled={needsAuth || creating || filteredAssets.length === 0}
             className="select-block"
-            size={Math.min(8, Math.max(3, filteredAssets.length || 3))}
           >
-            <option value="">
+            <option value="" disabled>
               {filteredAssets.length === 0 ? "— Nu exista active (adauga din Assets)" : "— Alege un activ —"}
             </option>
             {filteredAssets.map((a) => (
@@ -285,6 +325,9 @@ export function PortfolioHoldingsPage() {
               </option>
             ))}
           </select>
+          {selectedAssetId ? (
+            <p className="muted">Activ selectat: {assetById.get(Number(selectedAssetId))?.symbol ?? selectedAssetId}</p>
+          ) : null}
 
           <label htmlFor="holding-qty">Cantitate</label>
           <input
@@ -360,6 +403,28 @@ export function PortfolioHoldingsPage() {
             Raspuns din API: <code>GET /portfolios/:portfolioId/valuation</code> — ultimul pret cunoscut per
             activ. Daca lipseste snapshot de pret in backend, coloana de status indica acest lucru.
           </p>
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => void onRefreshPrices()}
+              disabled={refreshingPrices || loading}
+            >
+              {refreshingPrices ? "Refresh in curs..." : "Refresh Prices"}
+            </button>
+          </div>
+          {refreshingPrices && <LoadingNotice label="Se cer preturi live si se recalculeaza evaluarea..." />}
+          {refreshError && <ErrorBanner title="Refresh prices esuat" message={refreshError} />}
+          {refreshSuccess && <p className="field-success">{refreshSuccess}</p>}
+          {lastRefresh && lastRefresh.results.some((row) => row.status !== "success") ? (
+            <ErrorBanner
+              title="Unele preturi nu au putut fi actualizate"
+              message={lastRefresh.results
+                .filter((row) => row.status !== "success")
+                .map((row) => `${row.symbol ?? `id:${row.asset_id}`}: ${row.status}`)
+                .join(" | ")}
+            />
+          ) : null}
           {valuationError && <ErrorBanner title="Evaluare portofoliu" message={valuationError} />}
           {loading && !valuation && !valuationError ? (
             <LoadingNotice label="Incarcare evaluare din API..." />
@@ -374,34 +439,57 @@ export function PortfolioHoldingsPage() {
                   description="Adauga cel putin o detinere pentru a vedea linii in evaluare."
                 />
               ) : (
-                <div className="table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Simbol</th>
-                        <th>Activ</th>
-                        <th>Cantitate</th>
-                        <th>Pret</th>
-                        <th>Valoare</th>
-                        <th>Status pret</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {valuation.assets.map((row) => (
-                        <tr key={row.asset_id}>
-                          <td>{row.symbol ?? `id:${row.asset_id}`}</td>
-                          <td className="cell-muted">{row.name ?? "—"}</td>
-                          <td>{formatDec(row.quantity)}</td>
-                          <td className="cell-muted">{formatDec(row.price)}</td>
-                          <td>{formatDec(row.value)}</td>
-                          <td className="cell-muted">
-                            {row.missing_price ? "Lipseste pret" : "OK"}
-                          </td>
+                <>
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Simbol</th>
+                          <th>Activ</th>
+                          <th>Cantitate</th>
+                          <th>Pret</th>
+                          <th>Valoare</th>
+                          <th>Status pret</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {valuation.assets.map((row, idx) => (
+                          <tr key={`${row.asset_id}-${idx}`}>
+                            <td>{row.symbol ?? `id:${row.asset_id}`}</td>
+                            <td className="cell-muted">{row.name ?? "—"}</td>
+                            <td>{formatDec(row.quantity)}</td>
+                            <td className="cell-muted">{formatDec(row.price)}</td>
+                            <td>{formatDec(row.value)}</td>
+                            <td className="cell-muted">
+                              {row.missing_price ? "Lipseste pret" : "OK"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {lastRefresh ? (
+                    (() => {
+                      const missingAfterRefresh = valuation.assets.filter((row) => row.missing_price);
+                      if (missingAfterRefresh.length === 0) {
+                        return <p className="field-success">Dupa refresh, toate detinerile au pret disponibil.</p>;
+                      }
+                      return (
+                        <div className="error-banner" role="status" aria-live="polite">
+                          <strong className="error-banner-title">
+                            Dupa refresh, inca lipsesc preturi pentru {missingAfterRefresh.length} detineri
+                          </strong>
+                          <p className="error-banner-body">
+                            {missingAfterRefresh
+                              .map((row) => row.symbol ?? row.name ?? `id:${row.asset_id}`)
+                              .join(", ")}
+                          </p>
+                        </div>
+                      );
+                    })()
+                  ) : null}
+                </>
               )}
             </>
           ) : null}

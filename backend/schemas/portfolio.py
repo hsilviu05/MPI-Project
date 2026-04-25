@@ -16,6 +16,18 @@ class PortfolioUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
 
+class RefreshResult(BaseModel):
+    asset_id: int
+    symbol: Optional[str]
+    status: str  # "success", "failed", "missing_symbol", "provider_error"
+    price: Optional[Decimal]
+    timestamp: Optional[datetime]
+    message: Optional[str]
+
+
+class PortfolioRefreshResponse(BaseModel):
+    portfolio_id: int
+    results: List[RefreshResult]
 
 class PortfolioRead(BaseModel):
     id: int

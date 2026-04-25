@@ -2,6 +2,8 @@ import { apiFetch } from "../lib/apiClient";
 import { readApiErrorMessage } from "../lib/apiError";
 import type {
   PortfolioCreateBody,
+  PortfolioDetailRead,
+  PortfolioRefreshResponse,
   PortfolioRead,
   PortfolioUpdateBody,
   PortfolioValuationRead,
@@ -58,4 +60,22 @@ export async function getPortfolioValuation(portfolioId: number): Promise<Portfo
     throw new Error(await readApiErrorMessage(response));
   }
   return (await response.json()) as PortfolioValuationRead;
+}
+
+export async function getPortfolioDetail(portfolioId: number): Promise<PortfolioDetailRead> {
+  const response = await apiFetch(`/portfolios/${portfolioId}`);
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response));
+  }
+  return (await response.json()) as PortfolioDetailRead;
+}
+
+export async function refreshPortfolioPrices(portfolioId: number): Promise<PortfolioRefreshResponse> {
+  const response = await apiFetch(`/portfolios/${portfolioId}/refresh-prices`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response));
+  }
+  return (await response.json()) as PortfolioRefreshResponse;
 }
