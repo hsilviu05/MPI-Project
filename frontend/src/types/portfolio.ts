@@ -32,3 +32,17 @@ export type PortfolioValuationRead = {
   total_value: string | number;
   assets: ValuationAsset[];
 };
+
+export type PortfolioRefreshResult = {
+  asset_id: number;
+  symbol: string | null;
+  status: "success" | "failed" | "missing_symbol" | "provider_error" | string;
+  price: string | number | null;
+  timestamp: string | null;
+  message: string | null;
+};
+
+export type PortfolioRefreshResponse = {
+  portfolio_id: number;
+  results: PortfolioRefreshResult[];
+};

@@ -10,3 +10,4 @@ env/
 ENV/
 .DS_Store
 /.specstory
+.vscode/settings.json

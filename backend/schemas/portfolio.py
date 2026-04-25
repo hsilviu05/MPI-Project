@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from pydantic import BaseModel, Field
 from decimal import Decimal
@@ -46,5 +46,21 @@ class PortfolioValuationRead(BaseModel):
     total_value: Decimal
     assets: List[ValuationAsset]
 
+<<<<<<< Updated upstream
     class Config:
         orm_mode = False
+=======
+
+class PortfolioRefreshResult(BaseModel):
+    asset_id: int
+    symbol: Optional[str]
+    status: Literal["success", "failed", "missing_symbol", "provider_error"]
+    price: Optional[Decimal]
+    timestamp: Optional[datetime]
+    message: Optional[str] = None
+
+
+class PortfolioRefreshResponse(BaseModel):
+    portfolio_id: int
+    results: List[PortfolioRefreshResult]
+>>>>>>> Stashed changes
