@@ -6,6 +6,8 @@ import { getAccessToken } from "../lib/authToken";
 import {
   createPortfolio,
   deletePortfolio,
+  getPortfolioDetail,
+  getPortfolioValuation,
   listPortfolios,
   updatePortfolio,
 } from "../services/portfolios";
@@ -20,7 +22,17 @@ function formatDate(iso: string): string {
 }
 
 export function PortfoliosPage() {
+  type PortfolioOverview = {
+    holdingCount: number | null;
+    estimatedValue: string | number | null;
+    missingPriceCount: number | null;
+    warning: string | null;
+  };
+
   const [items, setItems] = useState<PortfolioRead[]>([]);
+  const [overviewById, setOverviewById] = useState<Record<number, PortfolioOverview>>({});
+  const [overviewLoading, setOverviewLoading] = useState(false);
+  const [overviewError, setOverviewError] = useState("");
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState("");
 
@@ -43,9 +55,54 @@ export function PortfoliosPage() {
     try {
       const data = await listPortfolios();
       setItems(data);
+      setOverviewError("");
+      setOverviewById({});
+      if (data.length > 0) {
+        setOverviewLoading(true);
+        const overviewEntries = await Promise.all(
+          data.map(async (portfolio) => {
+            try {
+              const [detail, valuation] = await Promise.all([
+                getPortfolioDetail(portfolio.id),
+                getPortfolioValuation(portfolio.id),
+              ]);
+              const missingPriceCount = valuation.assets.filter((asset) => asset.missing_price).length;
+              return [
+                portfolio.id,
+                {
+                  holdingCount: detail.holdings.length,
+                  estimatedValue: valuation.total_value,
+                  missingPriceCount,
+                  warning:
+                    missingPriceCount > 0
+                      ? `${missingPriceCount} ${missingPriceCount === 1 ? "pret lipsa" : "preturi lipsa"}`
+                      : null,
+                } satisfies PortfolioOverview,
+              ] as const;
+            } catch (error) {
+              return [
+                portfolio.id,
+                {
+                  holdingCount: null,
+                  estimatedValue: null,
+                  missingPriceCount: null,
+                  warning: error instanceof Error ? error.message : "Nu am putut incarca overview-ul.",
+                } satisfies PortfolioOverview,
+              ] as const;
+            }
+          }),
+        );
+        setOverviewById(Object.fromEntries(overviewEntries));
+        if (overviewEntries.some(([, v]) => v.warning)) {
+          setOverviewError(
+            "Unele overview-uri nu sunt complete. Verifica detaliile din coloana Status pret.",
+          );
+        }
+      }
     } catch (error) {
       setListError(error instanceof Error ? error.message : "Nu am putut incarca portofoliile.");
     } finally {
+      setOverviewLoading(false);
       setLoading(false);
     }
   }, []);
@@ -156,6 +213,7 @@ export function PortfoliosPage() {
         )}
 
         {listError && <ErrorBanner title="Lista portofolii" message={listError} />}
+        {overviewError && <ErrorBanner title="Overview portofolii" message={overviewError} />}
         {actionError && <ErrorBanner title="Actiune esuata" message={actionError} />}
 
         <form className="portfolio-form" onSubmit={onCreate}>
@@ -250,6 +308,9 @@ export function PortfoliosPage() {
                 <tr>
                   <th>Nume</th>
                   <th>Descriere</th>
+                  <th>Detineri</th>
+                  <th>Valoare estimata</th>
+                  <th>Status pret</th>
                   <th>Actualizat</th>
                   <th aria-label="Actiuni" />
                 </tr>
@@ -257,8 +318,21 @@ export function PortfoliosPage() {
               <tbody>
                 {items.map((p) => (
                   <tr key={p.id}>
+                    {(() => {
+                      const overview = overviewById[p.id];
+                      return (
+                        <>
                     <td>{p.name}</td>
                     <td className="cell-muted">{p.description || "—"}</td>
+                    <td className="cell-muted">
+                      {overviewLoading && !overview ? "Se calculeaza..." : overview?.holdingCount ?? "—"}
+                    </td>
+                    <td>{overviewLoading && !overview ? "Se calculeaza..." : overview?.estimatedValue ?? "—"}</td>
+                    <td className={overview?.missingPriceCount ? "cell-warning" : "cell-muted"}>
+                      {overviewLoading && !overview
+                        ? "Se verifica..."
+                        : overview?.warning ?? "Preturi complete"}
+                    </td>
                     <td className="cell-muted">{formatDate(p.updated_at)}</td>
                     <td className="cell-actions">
                       <Link className="btn-link" to={`/portfolios/${p.id}/holdings`}>
@@ -281,6 +355,9 @@ export function PortfoliosPage() {
                         Sterge
                       </button>
                     </td>
+                        </>
+                      );
+                    })()}
                   </tr>
                 ))}
               </tbody>

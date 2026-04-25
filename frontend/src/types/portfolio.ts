@@ -7,6 +7,12 @@ export type PortfolioRead = {
   updated_at: string;
 };
 
+export type PortfolioDetailRead = PortfolioRead & {
+  holdings: Array<{
+    id: number;
+  }>;
+};
+
 export type PortfolioCreateBody = {
   name: string;
   description?: string | null;

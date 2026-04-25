@@ -317,6 +317,11 @@ body {
   color: #64748b;
 }
 
+.cell-warning {
+  color: #b45309;
+  font-weight: 600;
+}
+
 .cell-actions {
   white-space: nowrap;
   text-align: right;
