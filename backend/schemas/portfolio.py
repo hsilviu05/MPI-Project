@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from decimal import Decimal
 
 
@@ -23,8 +23,7 @@ class PortfolioRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortfolioDetailRead(PortfolioRead):
@@ -45,20 +44,3 @@ class PortfolioValuationRead(BaseModel):
     portfolio_id: int
     total_value: Decimal
     assets: List[ValuationAsset]
-
-    class Config:
-        orm_mode = False
-
-
-class PortfolioRefreshResult(BaseModel):
-    asset_id: int
-    symbol: Optional[str]
-    status: Literal["success", "failed", "missing_symbol", "provider_error"]
-    price: Optional[Decimal]
-    timestamp: Optional[datetime]
-    message: Optional[str] = None
-
-
-class PortfolioRefreshResponse(BaseModel):
-    portfolio_id: int
-    results: List[PortfolioRefreshResult]

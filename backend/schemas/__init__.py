@@ -6,9 +6,8 @@ from .holding import HoldingCreate, HoldingUpdate, HoldingRead, HoldingDetailRea
 from .transaction import TransactionCreate, TransactionUpdate, TransactionRead
 from .price_snapshot import PriceSnapshotCreate, PriceSnapshotUpdate, PriceSnapshotRead
 
-# Resolve forward references for nested schemas
-PortfolioDetailRead.update_forward_refs(HoldingRead=HoldingRead)
-HoldingDetailRead.update_forward_refs(TransactionRead=TransactionRead)
+PortfolioDetailRead.model_rebuild()
+HoldingDetailRead.model_rebuild()
 
 __all__ = [
     # User

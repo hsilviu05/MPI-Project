@@ -36,6 +36,7 @@ app.include_router(transactions_router, prefix="/portfolios/{portfolio_id}/holdi
 
 @app.on_event("startup")
 def on_startup():
+    settings.validate_runtime()
     init_db()
 
 
