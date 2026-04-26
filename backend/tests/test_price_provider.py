@@ -32,9 +32,14 @@ def test_get_latest_price_raises_on_alpha_vantage_invalid_symbol_response(monkey
     monkeypatch.setattr(settings, "price_provider_api_key", "fake-key")
 
     def fake_get(*args, **kwargs):
+        # GLOBAL_QUOTE returns empty → triggers crypto fallback.
+        # CURRENCY_EXCHANGE_RATE also returns empty → InvalidSymbolError.
+        params = kwargs.get("params", {})
+        if params.get("function") == "CURRENCY_EXCHANGE_RATE":
+            return DummyResponse({"Realtime Currency Exchange Rate": {}})
         return DummyResponse({"Global Quote": {}})
 
     monkeypatch.setattr("backend.services.price_provider.requests.get", fake_get)
 
-    with pytest.raises(InvalidSymbolError, match="No quote returned for symbol"):
+    with pytest.raises(InvalidSymbolError, match="No exchange rate returned for symbol"):
         get_latest_price("INVALID")
