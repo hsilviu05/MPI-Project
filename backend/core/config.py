@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     # External price provider configuration
     price_provider: Optional[str] = Field(None, env="PRICE_PROVIDER")
     price_provider_api_key: Optional[str] = Field(None, env="PRICE_PROVIDER_API_KEY")
+    # Extra CORS origins, comma-separated (e.g. "https://app.example.com,https://app2.example.com")
+    cors_allowed_origins: str = Field("", env="CORS_ALLOWED_ORIGINS")
 
     model_config = SettingsConfigDict(env_file=str(env_path), env_file_encoding="utf-8")
 
