@@ -9,12 +9,12 @@ ENV PYTHONUNBUFFERED=1
 RUN addgroup --system --gid 1001 appgroup && \
     adduser --system --uid 1001 --gid 1001 --no-create-home appuser
 
-COPY requirements.txt ./backend/
+COPY backend/requirements.txt ./backend/
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r backend/requirements.txt
 
-COPY --chown=appuser:appgroup . ./backend
+COPY --chown=appuser:appgroup backend/ ./backend
 
 USER appuser
 
