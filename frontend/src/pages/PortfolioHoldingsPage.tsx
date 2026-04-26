@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { EmptyState, ErrorBanner, LoadingNotice } from "../components/feedback/PageStates";
+import { PortfolioCharts } from "../components/charts/PortfolioCharts";
 import { getAccessToken } from "../lib/authToken";
 import { listAssets } from "../services/assets";
 import {
@@ -421,8 +422,11 @@ export function PortfolioHoldingsPage() {
               title="Unele preturi nu au putut fi actualizate"
               message={lastRefresh.results
                 .filter((row) => row.status !== "success")
-                .map((row) => `${row.symbol ?? `id:${row.asset_id}`}: ${row.status}`)
-                .join(" | ")}
+                .map((row) => {
+                  const label = row.symbol ?? `id:${row.asset_id}`;
+                  return row.message ? `${label}: ${row.message}` : `${label}: ${row.status}`;
+                })
+                .join("\n")}
             />
           ) : null}
           {valuationError && <ErrorBanner title="Evaluare portofoliu" message={valuationError} />}
@@ -433,6 +437,7 @@ export function PortfolioHoldingsPage() {
               <p className="valuation-total">
                 <strong>Valoare totala estimata:</strong> {formatDec(valuation.total_value)}
               </p>
+              <PortfolioCharts valuation={valuation} holdings={holdings} />
               {valuation.assets.length === 0 ? (
                 <EmptyState
                   title="Nimic de evaluat"

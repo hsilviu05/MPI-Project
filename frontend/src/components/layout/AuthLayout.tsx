@@ -4,8 +4,13 @@ export function AuthLayout() {
   return (
     <div className="auth-shell">
       <section className="auth-card">
-        <h1>Portfolio Tracker</h1>
-        <p>Autentifica-te sau creeaza un cont nou.</p>
+        <div className="auth-brand">
+          <span className="auth-brand-icon" aria-hidden>◈</span>
+          <div>
+            <h1>Portfolio Tracker</h1>
+            <p>Manage your investments in one place.</p>
+          </div>
+        </div>
         <Outlet />
       </section>
     </div>
