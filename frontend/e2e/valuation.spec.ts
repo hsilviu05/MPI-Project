@@ -99,7 +99,7 @@ test.describe('Valuation Display Flow', () => {
         if (await refreshButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await refreshButton.click();
             await TestHelpers.waitForLoadingComplete(authenticatedPage);
-            const valuationElement = authenticatedPage.locator(`text=${symbol}`);
+            const valuationElement = authenticatedPage.locator('td').filter({ hasText: symbol }).first();
             await expect(valuationElement).toBeVisible({ timeout: 5000 });
         }
     });
