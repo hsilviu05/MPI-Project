@@ -16,17 +16,20 @@ app = FastAPI(
 
 setup_logging()  # Structured JSON logging to stdout
 
+_extra_origins = [o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()]
+_allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    *_extra_origins,
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "https://mpi-frontend-s4yg.onrender.com"
-    ],
-    # Orice port pe localhost / 127.0.0.1 (Vite poate folosi 5173, 5174, etc.)
-    allow_origin_regex=r"^https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?$",
+    allow_origins=_allowed_origins,
+    # Matches any localhost/127.0.0.1 port (Vite dev server) plus any *.onrender.com deploy.
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|^https://[a-z0-9-]+\.onrender\.com$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

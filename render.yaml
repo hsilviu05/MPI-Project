@@ -33,6 +33,8 @@ services:
       # Set PRICE_PROVIDER_API_KEY in the Render dashboard manually
       - key: PRICE_PROVIDER_API_KEY
         sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://mpi-frontend-s4yg.onrender.com"
 
   # ── Frontend ───────────────────────────────────────────────────────────────
   - type: web
