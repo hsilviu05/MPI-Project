@@ -1,5 +1,6 @@
 from decimal import Decimal
 import requests
+import yfinance as yf
 from typing import Optional
 
 from ..core.config import settings
@@ -89,6 +90,21 @@ def _fetch_alpha_vantage(symbol: str, api_key: str, timeout: int = 5) -> Decimal
         raise PriceProviderError(f"Unable to parse price for symbol {symbol}: {exc}") from exc
 
 
+def _fetch_yfinance(symbol: str) -> Decimal:
+    """Fetch price via yfinance (Yahoo Finance). No API key required.
+
+    Tries the symbol as-is first (stocks/ETFs), then appends '-USD' for crypto.
+    """
+    for sym in [symbol, f"{symbol}-USD"]:
+        try:
+            price = yf.Ticker(sym).fast_info.last_price
+            if price is not None and price > 0:
+                return Decimal(str(price))
+        except Exception:
+            continue
+    raise InvalidSymbolError(f"Symbol not found: {symbol}")
+
+
 def get_latest_price(symbol: str, provider: Optional[str] = None) -> Decimal:
     """Get the latest market price for `symbol` from configured provider.
 
@@ -103,6 +119,8 @@ def get_latest_price(symbol: str, provider: Optional[str] = None) -> Decimal:
         raise PriceProviderError("No price provider configured (PRICE_PROVIDER)")
 
     provider = provider.lower()
+    if provider == "yfinance":
+        return _fetch_yfinance(symbol)
     if provider == "alpha_vantage":
         if not api_key:
             raise PriceProviderError("Missing API key for Alpha Vantage (PRICE_PROVIDER_API_KEY)")
