@@ -13,10 +13,19 @@ class InvalidSymbolError(PriceProviderError):
     pass
 
 
+def _sanitise_av_message(msg: str) -> str:
+    """Remove the literal API key from Alpha Vantage error messages before surfacing them."""
+    api_key = settings.price_provider_api_key or ""
+    if api_key and api_key in msg:
+        msg = msg.replace(api_key, "***")
+    return msg
+
+
 def _check_alpha_vantage_errors(data: dict, symbol: str) -> None:
     """Raise PriceProviderError for rate-limit / service-error responses."""
     if any(k in data for k in ("Note", "Error Message", "Information")):
-        msg = data.get("Note") or data.get("Error Message") or data.get("Information")
+        raw = data.get("Note") or data.get("Error Message") or data.get("Information")
+        msg = _sanitise_av_message(raw or "")
         raise PriceProviderError(f"AlphaVantage error for {symbol}: {msg}")
 
 
