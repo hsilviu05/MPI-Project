@@ -7,11 +7,14 @@ from .api.routes.portfolio import router as portfolio_router
 from .api.routes.assets import router as assets_router
 from .api.routes.holdings import router as holdings_router
 from .api.routes.transactions import router as transactions_router
+from .core.logging_config import setup_logging
 
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0"
 )
+
+setup_logging()  # Structured JSON logging to stdout
 
 app.add_middleware(
     CORSMiddleware,
