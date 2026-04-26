@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from decimal import Decimal
 from datetime import datetime, timezone
+import time
 
 from ...db import get_db
 from ...models.user import User
@@ -214,6 +215,9 @@ def refresh_portfolio_prices(
                 "message": "No symbol available for asset",
             })
             continue
+
+        if len(seen_assets) > 1:
+            time.sleep(1.2)
 
         try:
             price = get_latest_price(symbol)

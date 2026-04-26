@@ -1,10 +1,24 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { onSessionExpired } from "../../lib/sessionExpiry";
 import { MainNavigation } from "../navigation/MainNavigation";
 
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Overview",
+  "/portfolios": "Portfolios",
+  "/assets": "Assets",
+  "/settings": "Settings",
+};
+
+function getPageTitle(pathname: string): string {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  if (pathname.startsWith("/portfolios/") && pathname.endsWith("/holdings")) return "Holdings";
+  return "Dashboard";
+}
+
 export function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showSessionPopup, setShowSessionPopup] = useState(false);
 
   useEffect(() => {
@@ -14,32 +28,37 @@ export function DashboardLayout() {
     });
   }, [navigate]);
 
+  const pageTitle = getPageTitle(location.pathname);
+
   return (
     <div className="dashboard-shell">
       <aside className="dashboard-sidebar">
         <div className="brand">
-          <h1>Portfolio Tracker</h1>
-          <p>Dashboard</p>
+          <span className="brand-icon" aria-hidden>◈</span>
+          <div>
+            <h1>Portfolio Tracker</h1>
+            <p>Investment Dashboard</p>
+          </div>
         </div>
         <MainNavigation />
       </aside>
 
       <div className="dashboard-content">
         <header className="dashboard-header">
-          <h2>Aplicatie investitii</h2>
-          <p>Navigheaza rapid intre modulele principale.</p>
+          <h2>{pageTitle}</h2>
         </header>
         <main className="dashboard-main">
           <Outlet />
         </main>
       </div>
+
       {showSessionPopup && (
         <div className="session-modal-backdrop" role="presentation">
           <div className="session-modal" role="alertdialog" aria-labelledby="session-expired-title">
-            <h3 id="session-expired-title">Sesiune expirata</h3>
-            <p>Ai fost deconectat automat. Te rugam sa te autentifici din nou.</p>
+            <h3 id="session-expired-title">Session expired</h3>
+            <p>You were signed out automatically. Please log in again.</p>
             <button type="button" className="btn-primary" onClick={() => setShowSessionPopup(false)}>
-              Am inteles
+              Got it
             </button>
           </div>
         </div>

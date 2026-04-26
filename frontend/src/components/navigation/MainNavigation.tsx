@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Briefcase, BarChart2, Settings, LogOut, LogIn } from "lucide-react";
 import { clearAccessToken, getAccessToken } from "../../lib/authToken";
 
 const navItems = [
-  { to: "/", label: "Overview", end: true },
-  { to: "/portfolios", label: "Portfolios" },
-  { to: "/assets", label: "Assets" },
-  { to: "/settings", label: "Settings" },
+  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/portfolios", label: "Portfolios", icon: Briefcase },
+  { to: "/assets", label: "Assets", icon: BarChart2 },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function MainNavigation() {
@@ -27,30 +28,34 @@ export function MainNavigation() {
   return (
     <nav aria-label="Main navigation">
       <ul className="nav-list">
-        {navItems.map((item) => (
-          <li key={item.to}>
+        {navItems.map(({ to, label, icon: Icon, end }) => (
+          <li key={to}>
             <NavLink
-              to={item.to}
-              end={item.end}
+              to={to}
+              end={end}
               className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
             >
-              {item.label}
+              <Icon size={18} aria-hidden />
+              <span>{label}</span>
             </NavLink>
           </li>
         ))}
-        {hasToken ? (
-          <li className="nav-list-auth">
+        <li className="nav-list-auth">
+          {hasToken ? (
             <button type="button" className="nav-link nav-button" onClick={onLogout}>
-              Logout
+              <LogOut size={18} aria-hidden />
+              <span>Logout</span>
             </button>
-          </li>
-        ) : (
-          <li className="nav-list-auth">
-            <NavLink to="/login" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
-              Login
+          ) : (
+            <NavLink
+              to="/login"
+              className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+            >
+              <LogIn size={18} aria-hidden />
+              <span>Login</span>
             </NavLink>
-          </li>
-        )}
+          )}
+        </li>
       </ul>
     </nav>
   );
