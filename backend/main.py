@@ -23,6 +23,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5174",
+        "https://mpi-frontend-s4yg.onrender.com",
+
     ],
     # Orice port pe localhost / 127.0.0.1 (Vite poate folosi 5173, 5174, etc.)
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
